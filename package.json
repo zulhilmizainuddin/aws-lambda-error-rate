@@ -1,0 +1,25 @@
+{
+  "name": "aws-lambda-error-rate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "handler.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zulhilmizainuddin/aws-lambda-error-rate.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zulhilmizainuddin/aws-lambda-error-rate/issues"
+  },
+  "homepage": "https://github.com/zulhilmizainuddin/aws-lambda-error-rate#readme",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.11",
+    "@types/node": "^10.9.4",
+    "typescript": "^3.0.3"
+  }
+}
