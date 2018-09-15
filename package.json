@@ -5,7 +5,7 @@
   "main": "handler.js",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -19,7 +19,14 @@
   "homepage": "https://github.com/zulhilmizainuddin/aws-lambda-error-rate#readme",
   "devDependencies": {
     "@types/aws-lambda": "^8.10.11",
+    "@types/chai": "^4.1.4",
+    "@types/mocha": "^5.2.5",
     "@types/node": "^10.9.4",
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
     "typescript": "^3.0.3"
+  },
+  "dependencies": {
+    "moment": "^2.22.2"
   }
 }
