@@ -14,35 +14,31 @@ export class MetricData {
     }
 
     public async getMetricErrorRates(functionName: string, metricTimeRange: MetricTimeRange, periodInSeconds: number): Promise<MetricErrorRate[]> {
-        return new Promise<MetricErrorRate[]>(async (resolve, reject) => {
-            const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTimeRange, periodInSeconds);
+        const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTimeRange, periodInSeconds);
 
-            const data: CloudWatch.GetMetricDataOutput = await this.getMetricDataOutput(param);
+        const data: CloudWatch.GetMetricDataOutput = await this.getMetricDataOutput(param);
 
-            if (data.MetricDataResults) {
-                for (let result of data.MetricDataResults) {
-                    
-                    if (result.Id === 'errorrate') {
-                        if (result.Timestamps && result.Values) {
+        const metricErrorRates: MetricErrorRate[] = [];
+        if (data.MetricDataResults) {
+            for (let result of data.MetricDataResults) {
+                
+                if (result.Id === 'errorrate') {
+                    if (result.Timestamps && result.Values) {
 
-                            const metricErrorRates: MetricErrorRate[] = [];
-                            for (let i = 0; i < result.Timestamps.length; i++) {
-                                metricErrorRates.push({
-                                    timestamp: result.Timestamps[i],
-                                    errorRate: result.Values[i]
-                                });
-                            }
-
-                            resolve(metricErrorRates);
-                        } else {
-                            reject(new Error('errorrate Timestamps or Values error'));
+                        for (let i = 0; i < result.Timestamps.length; i++) {
+                            metricErrorRates.push({
+                                timestamp: result.Timestamps[i],
+                                errorRate: result.Values[i]
+                            });
                         }
+
+                        break;
                     }
                 }
-            } else {
-                reject(new Error('Empty MetricDataResults'));
             }
-        });
+        }
+
+        return metricErrorRates;
     }
 
     public async getMetricDataOutput(metricInput: CloudWatch.GetMetricDataInput): Promise<CloudWatch.GetMetricDataOutput> {
