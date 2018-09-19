@@ -5,7 +5,7 @@
   "main": "handler.js",
   "scripts": {
     "build": "tsc",
-    "test": "mocha"
+    "test": "mocha --reporter spec ./test/model ./test/util"
   },
   "repository": {
     "type": "git",

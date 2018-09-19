@@ -2,8 +2,8 @@ import {expect} from 'chai';
 
 import * as sinon from 'sinon';
 
-import {MetricData, MetricErrorRate} from '../model/MetricData';
-import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange'
+import {MetricData, MetricErrorRate} from '../../model/MetricData';
+import {MetricTimeRange, MetricTimeRangeHelper} from '../../model/MetricTimeRange'
 
 describe('MetricData', () => {
     let sandbox: any;

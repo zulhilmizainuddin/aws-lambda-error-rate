@@ -2,7 +2,7 @@ import {expect} from 'chai';
 
 import moment from 'moment';
 
-import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange'
+import {MetricTimeRange, MetricTimeRangeHelper} from '../../model/MetricTimeRange'
 
 describe('MetricTimeRange', () => {
     it('calculate metric time range', () => {

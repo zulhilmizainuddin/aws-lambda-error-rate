@@ -2,7 +2,7 @@ import {expect} from 'chai';
 
 import * as sinon from 'sinon';
 
-import {AlarmState} from '../model/AlarmState';
+import {AlarmState} from '../../model/AlarmState';
 
 describe('AlarmState', () => {
     let sandbox: any;
