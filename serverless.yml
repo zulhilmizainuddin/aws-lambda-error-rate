@@ -24,6 +24,11 @@ functions:
     handler: handler.errorRate
   error:
     handler: handler.error
+    events:
+      - schedule:
+          description: Trigger error lambda
+          rate: rate(1 minute)
+          enabled: false
 
 resources:
   Resources:
