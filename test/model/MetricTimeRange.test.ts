@@ -2,12 +2,13 @@ import {expect} from 'chai';
 
 import moment from 'moment';
 
+import {Duration} from '../../enum/Duration';
 import {MetricTimeRange, MetricTimeRangeHelper} from '../../model/MetricTimeRange'
 
 describe('MetricTimeRange', () => {
     it('calculate metric time range', () => {
         const metricTimeRange: MetricTimeRange =
-            MetricTimeRangeHelper.calculate('2018-08-25T02:07:48.443+0000', 300);
+            MetricTimeRangeHelper.calculate('2018-08-25T02:07:48.443+0000', Duration.ThreeHundredSeconds);
 
         const expectedStartTimeStr = metricTimeRange.start.toString().trim();
         expect(expectedStartTimeStr).to.equal(moment('2018-08-25T02:02:49.443+0000').toDate().toString());

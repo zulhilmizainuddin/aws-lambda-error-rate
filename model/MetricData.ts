@@ -2,6 +2,7 @@ import AWS = require('aws-sdk');
 import CloudWatch = require('aws-sdk/clients/cloudwatch');
 
 import {MetricTimeRange} from './MetricTimeRange';
+import {Period} from '../enum/Period';
 
 export interface MetricErrorRate {
     timestamp: Date;
@@ -13,8 +14,8 @@ export class MetricData {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }
 
-    public async getMetricErrorRates(functionName: string, metricTimeRange: MetricTimeRange, periodInSeconds: number): Promise<MetricErrorRate[]> {
-        const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTimeRange, periodInSeconds);
+    public async getMetricErrorRates(functionName: string, metricTimeRange: MetricTimeRange, period: Period): Promise<MetricErrorRate[]> {
+        const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTimeRange, period);
 
         const data: CloudWatch.GetMetricDataOutput = await this.getMetricDataOutput(param);
 
@@ -58,7 +59,7 @@ export class MetricData {
         });
     }
 
-    private buildMetricDataInput(functionName: string, metricTimeRange: MetricTimeRange, periodInSeconds: number): CloudWatch.GetMetricDataInput {
+    private buildMetricDataInput(functionName: string, metricTimeRange: MetricTimeRange, period: Period): CloudWatch.GetMetricDataInput {
         const getMetricDataInput: CloudWatch.GetMetricDataInput = {
             MetricDataQueries: [
                 {
@@ -78,7 +79,7 @@ export class MetricData {
                                 }
                             ]
                         },
-                        Period: periodInSeconds,
+                        Period: period,
                         Stat: 'Sum',
                         Unit: 'Count'
                     }
@@ -96,7 +97,7 @@ export class MetricData {
                                 }
                             ]
                         },
-                        Period: periodInSeconds,
+                        Period: period,
                         Stat: 'Sum',
                         Unit: 'Count'
                     }
