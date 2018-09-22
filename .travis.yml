@@ -1,7 +1,7 @@
 language: node_js
 node_js: "node"
 
-dist: precise
+dist: trusty
 
 before_install:
   - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
