@@ -93,7 +93,7 @@ resources:
       Properties:
         DisplayName: ngDesk SNS topic
 
-    ErrorRateNotificationFlagStore:
+    ErrorRateNotificationFlagBucket:
       Type: AWS::S3::Bucket
       Properties:
         AccessControl: Private
@@ -103,12 +103,62 @@ resources:
       Value:
         Ref: LambdaErrorRateSecurityGroup
 
+    LambdaErrorRateFunctionArn:
+      Value:
+        Fn::GetAtt:
+          - 'ErrorRateLambdaFunction'
+          - 'Arn'
+
+    LambdaErrorRateFunctionName:
+      Value:
+        Ref: ErrorRateLambdaFunction
+
+    LambdaErrorFunctionArn:
+      Value:
+        Fn::GetAtt:
+          - 'ErrorLambdaFunction'
+          - 'Arn'
+
+    LambdaErrorFunctionName:
+      Value:
+        Ref: ErrorLambdaFunction
+
     LambdaErrorAlarmArn:
       Value:
         Fn::GetAtt:
           - 'LambdaErrorAlarm'
           - 'Arn'
 
+    LambdaErrorAlarmName:
+      Value:
+        Ref: LambdaErrorAlarm
+
     LambdaErrorSnsTopicArn:
       Value:
         Ref: LambdaErrorSnsTopic
+
+    LambdaErrorSnsTopicName:
+      Value:
+        Fn::GetAtt:
+          - 'LambdaErrorSnsTopic'
+          - 'TopicName'
+
+    NgDeskSnsTopicArn:
+      Value:
+        Ref: NgDeskSnsTopic
+
+    NgDeskSnsTopicName:
+      Value:
+        Fn::GetAtt:
+          - 'NgDeskSnsTopic'
+          - 'TopicName'
+
+    ErrorRateNotificationFlagBucketArn:
+      Value:
+        Fn::GetAtt:
+          - 'ErrorRateNotificationFlagBucket'
+          - 'Arn'
+
+    ErrorRateNotificationFlagBucketName:
+      Value:
+        Ref: ErrorRateNotificationFlagBucket
