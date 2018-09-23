@@ -7,8 +7,8 @@ describe('EventRule', () => {
 
     before(() => {
         event = {
-            ruleName: 'LambdaErrorAlarm-Rule',
-            functionName: 'aws-lambda-error-rate-dev-errorRate'
+            "ruleName": 'LambdaErrorAlarm-Rule',
+            "functionName": 'aws-lambda-error-rate-dev-errorRate'
         };
     });
 
