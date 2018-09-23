@@ -88,6 +88,16 @@ resources:
         SourceArn:
           Ref: LambdaErrorSnsTopic
 
+    NgDeskSnsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        DisplayName: ngDesk SNS topic
+
+    ErrorRateNotificationFlagStore:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: Private
+
   Outputs:
     LambdaErrorRateSecurityGroup:
       Value:
