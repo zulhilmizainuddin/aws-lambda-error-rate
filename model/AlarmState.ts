@@ -26,7 +26,7 @@ export class AlarmState {
         return stateValue;
     }
 
-    public getDescribeAlarmOutput(describeAlarmInput: CloudWatch.DescribeAlarmsInput): Promise<CloudWatch.DescribeAlarmsOutput> {
+    private getDescribeAlarmOutput(describeAlarmInput: CloudWatch.DescribeAlarmsInput): Promise<CloudWatch.DescribeAlarmsOutput> {
         return new Promise<CloudWatch.DescribeAlarmsOutput>((resolve, reject) => {
 
             const cloudWatch = new CloudWatch();
@@ -34,10 +34,10 @@ export class AlarmState {
                 if (err) {
                     console.log(err);
 
-                    reject(err);
+                    return reject(err);
                 }
 
-                resolve(data);
+                return resolve(data);
             })
         });
     }
