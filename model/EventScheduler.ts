@@ -35,7 +35,7 @@ export class EventScheduler {
         return true;
     }
 
-    public async putRecurringRule(alarmName: string, rateExpression: RateExpression): Promise<string> {
+    private putRecurringRule(alarmName: string, rateExpression: RateExpression): Promise<string> {
         return new Promise<string>((resolve, reject) => {
 
             const putRuleRequest: CloudWatchEvents.PutRuleRequest = {
@@ -59,7 +59,7 @@ export class EventScheduler {
         });
     }
 
-    public async putRecurringRuleTarget(ruleName: string, functionArn: string, functionName: string): Promise<boolean> {
+    private putRecurringRuleTarget(ruleName: string, functionArn: string, functionName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const putTargetsRequest: CloudWatchEvents.PutTargetsRequest = {
@@ -89,7 +89,7 @@ export class EventScheduler {
         });
     }
 
-    public async addPermissionToTriggerFunction(ruleArn: string, functionName: string): Promise<boolean> {
+    private addPermissionToTriggerFunction(ruleArn: string, functionName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const addPermissionRequest: Lambda.AddPermissionRequest = {
@@ -133,7 +133,7 @@ export class EventScheduler {
         return true;
     }
 
-    public async deleteRecurringRule(ruleName: string): Promise<boolean> {
+    private deleteRecurringRule(ruleName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const deleteRuleRequest: CloudWatchEvents.DeleteRuleRequest = {
@@ -153,7 +153,7 @@ export class EventScheduler {
         });
     }
 
-    public async removeRecurringRuleTarget(ruleName: string): Promise<boolean> {
+    private removeRecurringRuleTarget(ruleName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const removeTargetsRequest: CloudWatchEvents.RemoveTargetsRequest = {
@@ -176,7 +176,7 @@ export class EventScheduler {
         });
     }
 
-    public async removePermissionToTriggerFunction(functionName: string): Promise<boolean> {
+    private removePermissionToTriggerFunction(functionName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const removePermissionRequest: Lambda.RemovePermissionRequest = {
