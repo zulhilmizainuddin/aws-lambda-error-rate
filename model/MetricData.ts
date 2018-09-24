@@ -42,7 +42,7 @@ export class MetricData {
         return metricErrorRates;
     }
 
-    public async getMetricDataOutput(metricInput: CloudWatch.GetMetricDataInput): Promise<CloudWatch.GetMetricDataOutput> {
+    private getMetricDataOutput(metricInput: CloudWatch.GetMetricDataInput): Promise<CloudWatch.GetMetricDataOutput> {
         return new Promise<CloudWatch.GetMetricDataOutput>((resolve, reject) => {
 
             const cloudWatch = new CloudWatch();
@@ -51,10 +51,10 @@ export class MetricData {
                 if (err) {
                     console.log(err);
 
-                    reject(err);
+                    return reject(err);
                 }
 
-                resolve(data);
+                return resolve(data);
             })
         });
     }
