@@ -29,7 +29,7 @@ export class StackDetail {
         return output;
     }
 
-    public async describeStacks(stackname: string): Promise<CloudFormation.DescribeStacksOutput> {
+    private describeStacks(stackname: string): Promise<CloudFormation.DescribeStacksOutput> {
         return new Promise<CloudFormation.DescribeStacksOutput>((resolve, reject) => {
 
             const describeStacksInput: CloudFormation.DescribeStacksInput = {
