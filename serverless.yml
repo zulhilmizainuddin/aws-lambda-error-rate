@@ -88,11 +88,6 @@ resources:
         SourceArn:
           Ref: LambdaErrorSnsTopic
 
-    NgDeskSnsTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        DisplayName: ngDesk SNS topic
-
     ErrorRateNotificationFlagBucket:
       Type: AWS::S3::Bucket
       Properties:
@@ -141,16 +136,6 @@ resources:
       Value:
         Fn::GetAtt:
           - 'LambdaErrorSnsTopic'
-          - 'TopicName'
-
-    NgDeskSnsTopicArn:
-      Value:
-        Ref: NgDeskSnsTopic
-
-    NgDeskSnsTopicName:
-      Value:
-        Fn::GetAtt:
-          - 'NgDeskSnsTopic'
           - 'TopicName'
 
     ErrorRateNotificationFlagBucketArn:
