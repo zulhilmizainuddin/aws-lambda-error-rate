@@ -7,8 +7,8 @@ export interface AlarmStatus {
 
 export class AlarmNotification {
 
-    public extractAlarmStatus(event: any): AlarmStatus {
-        let alarmStatus: AlarmStatus = null;
+    public extractAlarmStatus(event: any): AlarmStatus | null {
+        let alarmStatus: AlarmStatus | null = null;
 
         if (event.Records) {
             for (let record of event.Records) {

@@ -33,7 +33,7 @@ describe('AlarmNotification', () => {
     it('should get alarm status', () => {
         const alarmNotification = new AlarmNotification();
 
-        const alarmStatus: AlarmStatus = alarmNotification.extractAlarmStatus(event);
+        const alarmStatus: AlarmStatus | null = alarmNotification.extractAlarmStatus(event);
 
         expect(alarmStatus).to.deep.equal({
             alarmName: 'LambdaErrorAlarm',

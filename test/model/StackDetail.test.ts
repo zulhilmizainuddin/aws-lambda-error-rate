@@ -88,7 +88,7 @@ describe('StackDetail', () => {
             return describeStacksOutput;
         });
 
-        const stackOutputs: {[key: string]: string} = await stackDetail.getStackOutputs('aws-lambda-error-rate-dev');
+        const stackOutputs: {[key: string]: string} | null = await stackDetail.getStackOutputs('aws-lambda-error-rate-dev');
 
         expect(stackOutputs).to.deep.include({
             "ErrorLambdaFunctionQualifiedArn": "arn:aws:lambda:ap-southeast-1:123456789012:function:aws-lambda-error-rate-dev-error:13",
