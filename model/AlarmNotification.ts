@@ -5,14 +5,28 @@ export interface AlarmStatus {
 }
 
 export class AlarmNotification {
-    public extractAlarmStatus(notification: any): AlarmStatus {
-        const message: any = JSON.parse(notification.Message);
+    
+    public extractAlarmStatus(event: any): AlarmStatus {
+        let alarmStatus: AlarmStatus = null;
 
-        const alarmStatus: AlarmStatus = {
-            alarmName: message.AlarmName,
-            oldStateValue: message.OldStateValue,
-            newStateValue: message.NewStateValue
-        };
+        if (event.Records) {
+            for (let record of event.Records) {
+
+                if (record.Sns) {
+                    const message: any = JSON.parse(record.Sns.Message);
+
+                    if (message.AlarmName) {
+                        alarmStatus = {
+                            alarmName: message.AlarmName,
+                            oldStateValue: message.OldStateValue,
+                            newStateValue: message.NewStateValue
+                        };
+    
+                        break;
+                    }
+                }
+            }
+        }
 
         return alarmStatus;
     }
