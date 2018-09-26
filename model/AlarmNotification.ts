@@ -2,10 +2,11 @@ export interface AlarmStatus {
     alarmName: string;
     oldStateValue: string;
     newStateValue: string;
+    stateChangeTime: string;
 }
 
 export class AlarmNotification {
-    
+
     public extractAlarmStatus(event: any): AlarmStatus {
         let alarmStatus: AlarmStatus = null;
 
@@ -19,7 +20,8 @@ export class AlarmNotification {
                         alarmStatus = {
                             alarmName: message.AlarmName,
                             oldStateValue: message.OldStateValue,
-                            newStateValue: message.NewStateValue
+                            newStateValue: message.NewStateValue,
+                            stateChangeTime: message.StateChangeTime
                         };
     
                         break;

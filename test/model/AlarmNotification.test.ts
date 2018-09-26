@@ -38,7 +38,8 @@ describe('AlarmNotification', () => {
         expect(alarmStatus).to.deep.equal({
             alarmName: 'LambdaErrorAlarm',
             oldStateValue: 'OK',
-            newStateValue: 'ALARM'
+            newStateValue: 'ALARM',
+            stateChangeTime: '2018-09-26T02:59:41.187+0000'
         });
     });
 });
