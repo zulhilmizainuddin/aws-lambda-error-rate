@@ -1,8 +1,11 @@
 import {MetricErrorRate} from './MetricData';
+
+import {Duration} from '../enum/Duration';
+import {Period} from '../enum/Period';
 import {Threshold} from '../enum/Threshold';
 
 export class ErrorRateThreshold {
-    public isExceedThreshold(metricErrorRates: MetricErrorRate[], threshold: Threshold): boolean {
+    public isExceedThreshold(metricErrorRates: MetricErrorRate[], threshold: Threshold, duration: Duration, period: Period): boolean {
 
         let count: number = 0;
         for (let metricErrorRate of metricErrorRates) {
@@ -11,7 +14,9 @@ export class ErrorRateThreshold {
             }
         }
 
-        const isExceeded: boolean = count === metricErrorRates.length ? true : false;
+        const thresholdCountToCross: number = duration / period;
+
+        const isExceeded: boolean = count === thresholdCountToCross ? true : false;
 
         return isExceeded;
     }

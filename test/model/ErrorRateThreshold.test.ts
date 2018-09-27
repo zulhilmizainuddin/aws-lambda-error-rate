@@ -3,7 +3,9 @@ import {expect} from 'chai';
 import {ErrorRateThreshold} from '../../model/ErrorRateThreshold';
 import {MetricErrorRate} from '../../model/MetricData';
 
+import {Duration} from '../../enum/Duration';
 import {Threshold} from '../../enum/Threshold';
+import {Period} from '../../enum/Period';
 
 describe('ErrorRateThreshold', () => {
     it('should exceed threshold', () => {
@@ -31,7 +33,7 @@ describe('ErrorRateThreshold', () => {
         ];
 
         const errorRateThreshold = new ErrorRateThreshold();
-        const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent);
+        const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
 
         expect(isExceedThreshold).to.be.true;
     });
