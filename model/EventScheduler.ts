@@ -11,7 +11,7 @@ export class EventScheduler {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }
 
-    public async createEvent(alarmName: string, rateExpression: RateExpression, functionArn: string): Promise<boolean> {
+    public async createEvent(alarmName: string, rateExpression: RateExpression, functionArn: string, functionName: string): Promise<boolean> {
 
         const ruleArn: string = await this.putRecurringRule(alarmName, rateExpression);
         if (!ruleArn) {
@@ -19,10 +19,8 @@ export class EventScheduler {
         }
 
         const ruleName: string = EventRuleArnHelper.extractRuleName(ruleArn);
-        const functionArnWithoutVersionNumber: string = LambdaArnHelper.extractArnWithoutVersionNumber(functionArn);
-        const functionName: string = LambdaArnHelper.extractFunctionName(functionArn);
 
-        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(ruleName, functionArnWithoutVersionNumber, functionName);
+        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(ruleName, functionArn, functionName);
         if (!isPutTargetSuccess) {
             return false;
         }

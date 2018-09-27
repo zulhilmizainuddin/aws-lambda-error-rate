@@ -31,7 +31,11 @@ describe('EventScheduler', () => {
             return true;
         });
 
-        const isSuccess: boolean = await eventScheduler.createEvent('LambdaErrorAlarm', RateExpression.OneMinute, 'arn:aws:lambda:ap-southeast-1:123456789012:function:aws-lambda-error-rate-dev-errorRate:13');
+        const isSuccess: boolean = await eventScheduler.createEvent(
+            'LambdaErrorAlarm',
+            RateExpression.OneMinute,
+            'arn:aws:lambda:ap-southeast-1:123456789012:function:aws-lambda-error-rate-dev-errorRate',
+            'aws-lambda-error-rate-dev-errorRate');
 
         expect(isSuccess).to.be.true;
 
