@@ -51,8 +51,6 @@ resources:
         ActionsEnabled: true
         AlarmActions:
           - Ref: LambdaErrorSnsTopic
-        OKActions:
-          - Ref: LambdaErrorSnsTopic
         Namespace: AWS/Lambda
         MetricName: Errors
         Dimensions:
