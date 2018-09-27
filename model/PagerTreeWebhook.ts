@@ -3,7 +3,7 @@ import request = require('request-promise-native');
 import {IncidentWebhook} from "./IncidentWebhook";
 
 export class PagerTreeWebhook implements IncidentWebhook {
-    public constructor(private url: string, private title: string, private description?: string) { }
+    public constructor(private url: string, private id: string, private title?: string, private description?: string) { }
 
     public async createIncident(): Promise<boolean> {
         const isSuccess: boolean = await this.postCreateIncident();
@@ -18,7 +18,7 @@ export class PagerTreeWebhook implements IncidentWebhook {
             uri: this.url,
             body: {
                 event_type: 'create',
-                Id: this.title,
+                Id: this.id,
                 Title: this.title,
                 Description: this.description
             },
@@ -43,7 +43,7 @@ export class PagerTreeWebhook implements IncidentWebhook {
             uri: this.url,
             body: {
                 event_type: 'resolve',
-                Id: this.title
+                Id: this.id
             },
             json: true
         };
