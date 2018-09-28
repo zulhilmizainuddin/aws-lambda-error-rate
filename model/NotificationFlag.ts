@@ -52,6 +52,10 @@ export class NotificationFlag {
                 if (err) {
                     console.log(err);
 
+                    if (err.code === 'NoSuchKey') {
+                        return resolve(false);
+                    }
+
                     return reject(err);
                 }
 
@@ -82,7 +86,7 @@ export class NotificationFlag {
                     return reject(err);
                 }
 
-                resolve(true);
+                return resolve(true);
             });
         });
     }
