@@ -1,12 +1,14 @@
+import {AlarmStatus} from './AlarmNotification';
+
 export interface EventRuleInput {
-    ruleName: string;
+    alarmStatus: AlarmStatus;
     functionName: string;
 }
 
 export class EventRule {
     public extractRuleInput(event: any): EventRuleInput {
         const eventRuleInput: EventRuleInput = {
-            ruleName: event.ruleName,
+            alarmStatus: event.alarmStatus,
             functionName: event.functionName
         };
 

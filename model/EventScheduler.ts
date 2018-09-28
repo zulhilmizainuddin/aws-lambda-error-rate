@@ -2,25 +2,23 @@ import AWS = require('aws-sdk');
 import CloudWatchEvents = require('aws-sdk/clients/cloudwatchevents');
 import Lambda = require('aws-sdk/clients/lambda');
 
+import {AlarmStatus} from './AlarmNotification';
+
 import {RateExpression} from '../enum/RateExpression';
-import {LambdaArnHelper} from '../util/LambdaArnHelper';
-import {EventRuleArnHelper} from '../util/EventRuleArnHelper';
 
 export class EventScheduler {
     public constructor() {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }
 
-    public async createEvent(alarmName: string, rateExpression: RateExpression, functionArn: string, functionName: string): Promise<boolean> {
+    public async createEvent(alarmStatus: AlarmStatus, rateExpression: RateExpression, functionArn: string, functionName: string): Promise<boolean> {
 
-        const ruleArn: string = await this.putRecurringRule(alarmName, rateExpression);
+        const ruleArn: string = await this.putRecurringRule(alarmStatus.alarmName, rateExpression);
         if (!ruleArn) {
             return false;
         }
 
-        const ruleName: string = EventRuleArnHelper.extractRuleName(ruleArn);
-
-        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(ruleName, functionArn, functionName);
+        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(alarmStatus, functionArn, functionName);
         if (!isPutTargetSuccess) {
             return false;
         }
@@ -37,7 +35,7 @@ export class EventScheduler {
         return new Promise<string>((resolve, reject) => {
 
             const putRuleRequest: CloudWatchEvents.PutRuleRequest = {
-                Name: `${alarmName}-Rule`,
+                Name: alarmName,
                 ScheduleExpression: rateExpression,
                 State: 'ENABLED'
             };
@@ -57,17 +55,17 @@ export class EventScheduler {
         });
     }
 
-    private putRecurringRuleTarget(ruleName: string, functionArn: string, functionName: string): Promise<boolean> {
+    private putRecurringRuleTarget(alarmStatus: AlarmStatus, functionArn: string, functionName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const putTargetsRequest: CloudWatchEvents.PutTargetsRequest = {
-                Rule: ruleName,
+                Rule: alarmStatus.alarmName,
                 Targets: [
                     {
-                        Id: `${ruleName}-Target-Id`,
+                        Id: alarmStatus.alarmName,
                         Arn: functionArn,
                         Input: JSON.stringify({
-                            ruleName: ruleName,
+                            alarmStatus: alarmStatus,
                             functionName: functionName
                         })
                     }
@@ -91,7 +89,7 @@ export class EventScheduler {
         return new Promise<boolean>((resolve, reject) => {
 
             const addPermissionRequest: Lambda.AddPermissionRequest = {
-                StatementId: `${functionName}-Trigger`,
+                StatementId: functionName,
                 FunctionName: functionName,
                 Action: 'lambda:InvokeFunction',
                 Principal: 'events.amazonaws.com',
@@ -111,19 +109,19 @@ export class EventScheduler {
         });
     }
 
-    public async deleteEvent(ruleName: string, functionName: string): Promise<boolean> {
+    public async deleteEvent(alarmName: string, functionName: string): Promise<boolean> {
 
         const isRemovePermissionToTriggerFunctionSuccess: boolean = await this.removePermissionToTriggerFunction(functionName);
         if (!isRemovePermissionToTriggerFunctionSuccess) {
             return false;
         }
 
-        const isRecurringRuleTargetDeleted: boolean = await this.removeRecurringRuleTarget(ruleName);
+        const isRecurringRuleTargetDeleted: boolean = await this.removeRecurringRuleTarget(alarmName);
         if (!isRecurringRuleTargetDeleted) {
             return false;
         }
 
-        const isRecurringRuleDeleted: boolean = await this.deleteRecurringRule(ruleName);
+        const isRecurringRuleDeleted: boolean = await this.deleteRecurringRule(alarmName);
         if (!isRecurringRuleDeleted) {
             return false;
         }
@@ -131,11 +129,11 @@ export class EventScheduler {
         return true;
     }
 
-    private deleteRecurringRule(ruleName: string): Promise<boolean> {
+    private deleteRecurringRule(alarmName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const deleteRuleRequest: CloudWatchEvents.DeleteRuleRequest = {
-                Name: ruleName
+                Name: alarmName
             };
 
             const cloudWatchEvent = new CloudWatchEvents();
@@ -151,13 +149,13 @@ export class EventScheduler {
         });
     }
 
-    private removeRecurringRuleTarget(ruleName: string): Promise<boolean> {
+    private removeRecurringRuleTarget(alarmName: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const removeTargetsRequest: CloudWatchEvents.RemoveTargetsRequest = {
-                Rule: ruleName,
+                Rule: alarmName,
                 Ids: [
-                    `${ruleName}-Target-Id`
+                    alarmName
                 ]
             };
 
@@ -179,7 +177,7 @@ export class EventScheduler {
 
             const removePermissionRequest: Lambda.RemovePermissionRequest = {
                 FunctionName: functionName,
-                StatementId: `${functionName}-Trigger`
+                StatementId: functionName
             }
 
             const lambda = new Lambda();
@@ -187,10 +185,10 @@ export class EventScheduler {
                 if (err) {
                     console.log(err);
 
-                    reject(err);
+                    return reject(err);
                 }
 
-                resolve(true);
+                return resolve(true);
             });
         });
     }

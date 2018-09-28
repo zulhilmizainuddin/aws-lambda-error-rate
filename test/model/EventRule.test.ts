@@ -7,8 +7,13 @@ describe('EventRule', () => {
 
     before(() => {
         event = {
-            "ruleName": 'LambdaErrorAlarm-Rule',
-            "functionName": 'aws-lambda-error-rate-dev-errorRate'
+            "alarmStatus": {
+                "alarmName": "LambdaErrorAlarm",
+                "oldStateValue": "OK",
+                "newStateValue": "ALARM",
+                "stateChangeTime": "2018-09-28T01:07:44.297+0000"
+            },
+            "functionName": "aws-lambda-error-rate-dev-errorRate"
         };
     });
 
@@ -18,7 +23,12 @@ describe('EventRule', () => {
         const eventRuleInput: EventRuleInput = eventRule.extractRuleInput(event);
 
         expect(eventRuleInput).to.deep.equal({
-            ruleName: 'LambdaErrorAlarm-Rule',
+            alarmStatus: {
+                alarmName: 'LambdaErrorAlarm',
+                oldStateValue: 'OK',
+                newStateValue: 'ALARM',
+                stateChangeTime: '2018-09-28T01:07:44.297+0000'
+            },
             functionName: 'aws-lambda-error-rate-dev-errorRate'
         });
     });
