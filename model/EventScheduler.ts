@@ -18,7 +18,7 @@ export class EventScheduler {
             return false;
         }
 
-        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(alarmStatus, functionArn, functionName);
+        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(alarmStatus, functionArn);
         if (!isPutTargetSuccess) {
             return false;
         }
@@ -55,7 +55,7 @@ export class EventScheduler {
         });
     }
 
-    private putRecurringRuleTarget(alarmStatus: AlarmStatus, functionArn: string, functionName: string): Promise<boolean> {
+    private putRecurringRuleTarget(alarmStatus: AlarmStatus, functionArn: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const putTargetsRequest: CloudWatchEvents.PutTargetsRequest = {
@@ -64,10 +64,7 @@ export class EventScheduler {
                     {
                         Id: alarmStatus.alarmName,
                         Arn: functionArn,
-                        Input: JSON.stringify({
-                            alarmStatus: alarmStatus,
-                            functionName: functionName
-                        })
+                        Input: JSON.stringify(alarmStatus)
                     }
                 ]
             };

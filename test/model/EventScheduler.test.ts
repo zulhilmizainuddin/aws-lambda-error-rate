@@ -18,7 +18,8 @@ describe('EventScheduler', () => {
             "alarmName": "LambdaErrorAlarm",
             "oldStateValue": "OK",
             "newStateValue": "ALARM",
-            "stateChangeTime": "2018-09-26T02:59:41.187+0000"
+            "stateChangeTime": "2018-09-26T02:59:41.187+0000",
+            "erroredFunctionName": "aws-lambda-error-rate-dev-error"
         };
     });
 
