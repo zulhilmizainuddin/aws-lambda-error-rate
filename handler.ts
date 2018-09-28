@@ -18,9 +18,6 @@ import {RateExpression} from './enum/RateExpression';
 import {Threshold} from './enum/Threshold';
 
 const STACK_NAME: string = 'aws-lambda-error-rate-dev';
-const ERROR_FUNCTION_NAME: string = 'aws-lambda-error-rate-dev-error';
-const ERROR_RATE_FUNCTION_NAME: string = 'aws-lambda-error-rate-dev-errorRate';
-const ERROR_RATE_FUNCTION_ARN: string = 'arn:aws:lambda:ap-southeast-1:123456789012:function:aws-lambda-error-rate-dev-errorRate';
 const PAGER_TREE_URL: string = 'https://api.pagertree.com/integration/int_Hk50sQvKm';
 const INCIDENT_FLAG_BUCKET_NAME: string = 'aws-lambda-error-rate-de-errorratenotificationfla-ea2sgss74yj3';
 
@@ -54,53 +51,8 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                 return callback('Failed to extract alarm status');
             }
 
-            // const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(alarmStatus.stateChangeTime, Duration.ThreeHundredSeconds);
-
-            // console.log('metricTimeRange:');
-            // console.log(JSON.stringify(metricTimeRange));
-
-            // const metricData = new MetricData();
-            // const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(ERROR_FUNCTION_NAME, metricTimeRange, Period.SixtySeconds);
-
-            // console.log('metricErrorRates:');
-            // console.log(JSON.stringify(metricErrorRates));
-
-            // const errorRateThreshold = new ErrorRateThreshold();
-            // const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
-
-            // console.log('isExceedThreshold:');
-            // console.log(isExceedThreshold);
-
-            // if (isExceedThreshold) {
-
-            //     const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
-            //         PAGER_TREE_URL,
-            //         alarmStatus.stateChangeTime,
-            //         alarmStatus.alarmName,
-            //         `Error percentage > ${Threshold.OnePercent}% for at least ${Duration.ThreeHundredSeconds} seconds`);
-
-            //     const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
-
-            //     console.log('isCreateIncidentSuccess:');
-            //     console.log(isCreateIncidentSuccess);
-
-            //     if (!isCreateIncidentSuccess) {
-            //         return callback('Failed to create incident');
-            //     }
-
-            //     const notificationFlag = new NotificationFlag();
-            //     const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
-
-            //     console.log('isPutIncidentFlagSuccess:');
-            //     console.log(isPutIncidentFlagSuccess);
-
-            //     if (!isPutIncidentFlagSuccess) {
-            //         return callback('Failed to put incident flag to bucket');
-            //     }
-            // }
-
             const eventScheduler = new EventScheduler();
-            const isCreateEventSuccess: boolean = await eventScheduler.createEvent(alarmStatus, RateExpression.OneMinute, ERROR_RATE_FUNCTION_ARN, ERROR_RATE_FUNCTION_NAME);
+            const isCreateEventSuccess: boolean = await eventScheduler.createEvent(alarmStatus, RateExpression.OneMinute, context.invokedFunctionArn, context.functionName);
 
             console.log('isCreateEventSuccess:');
             console.log(isCreateEventSuccess);
@@ -111,11 +63,8 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 
         } else {
             console.log('event is EventRuleInput');
-            // event = event as EventRuleInput;
 
-            // const castedEvent: EventRuleInput = event as EventRuleInput;
-
-            const alarmStatus: AlarmStatus = event.alarmStatus as AlarmStatus;
+            const alarmStatus: AlarmStatus = event as AlarmStatus;
 
             const alarmState = new AlarmState();
             const activeAlarmState: string = await alarmState.getState(alarmStatus.alarmName);
@@ -152,7 +101,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                 }
 
                 const eventScheduler = new EventScheduler();
-                const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, ERROR_RATE_FUNCTION_NAME);
+                const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, context.functionName);
 
                 console.log('isDeleteEventSuccess:');
                 console.log(isDeleteEventSuccess);
@@ -167,7 +116,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                 console.log(JSON.stringify(metricTimeRange));
 
                 const metricData = new MetricData();
-                const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(ERROR_FUNCTION_NAME, metricTimeRange, Period.SixtySeconds);
+                const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmStatus.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
 
                 console.log('metricErrorRates:');
                 console.log(JSON.stringify(metricErrorRates));
