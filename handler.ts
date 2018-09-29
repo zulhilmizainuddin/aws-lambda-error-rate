@@ -17,6 +17,8 @@ import {Period} from './enum/Period';
 import {RateExpression} from './enum/RateExpression';
 import {Threshold} from './enum/Threshold';
 
+import {Logger} from './util/Logger';
+
 const STACK_NAME: string = 'aws-lambda-error-rate-dev';
 const PAGER_TREE_URL: string = 'https://api.pagertree.com/integration/int_Hk50sQvKm';
 const INCIDENT_FLAG_BUCKET_NAME: string = 'aws-lambda-error-rate-de-errorratenotificationfla-ea2sgss74yj3';
@@ -24,11 +26,8 @@ const INCIDENT_FLAG_BUCKET_NAME: string = 'aws-lambda-error-rate-de-errorratenot
 module.exports.errorRate = async (event: any, context: Context, callback: Callback) => {
 
     try {
-        console.log('event:');
-        console.log(JSON.stringify(event));
-
-        console.log('context:');
-        console.log(JSON.stringify(context));
+        Logger.logJson('event', event);
+        Logger.logJson('context', context);
 
         const stackDetail = new StackDetail();
         const stackOutput: { [key: string]: string } | null = await stackDetail.getStackOutputs(STACK_NAME);
@@ -37,15 +36,14 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
         }
 
         if (event.Records) {
-            console.log('event is SNSEvent');
+            Logger.log('eventType', 'SNSEvent');
 
             event = event as SNSEvent;
 
             const alarmNotification = new AlarmNotification();
             const alarmStatus: AlarmStatus | null = alarmNotification.extractAlarmStatus(event);
 
-            console.log('alarmStatus:');
-            console.log(JSON.stringify(alarmStatus));
+            Logger.logJson('alarmStatus', alarmStatus);
 
             if (!alarmStatus) {
                 return callback('Failed to extract alarm status');
@@ -54,37 +52,33 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
             const eventScheduler = new EventScheduler();
             const isCreateEventSuccess: boolean = await eventScheduler.createEvent(alarmStatus, RateExpression.OneMinute, context.invokedFunctionArn, context.functionName);
 
-            console.log('isCreateEventSuccess:');
-            console.log(isCreateEventSuccess);
+            Logger.log('isCreateEventSuccess', isCreateEventSuccess);
 
             if (!isCreateEventSuccess) {
                 return callback('Failed to create scheduled event');
             }
 
         } else {
-            console.log('event is EventRuleInput');
+            Logger.log('eventType', 'AlarmStatus');
 
             const alarmStatus: AlarmStatus = event as AlarmStatus;
 
             const alarmState = new AlarmState();
             const activeAlarmState: string = await alarmState.getState(alarmStatus.alarmName);
 
-            console.log('activeAlarmState:');
-            console.log(activeAlarmState);
+            Logger.log('activeAlarmState', activeAlarmState);
 
             if (activeAlarmState === 'OK') {
                 const notificationFlag = new NotificationFlag();
                 const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-                console.log('isIncidentFlagExist:');
-                console.log(isIncidentFlagExist);
+                Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
                 if (isIncidentFlagExist) {
                     const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(PAGER_TREE_URL, alarmStatus.stateChangeTime);
                     const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
 
-                    console.log('isResolveIncidentSuccess:');
-                    console.log(isResolveIncidentSuccess);
+                    Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
 
                     if (!isResolveIncidentSuccess) {
                         return callback('Failed to resolve incident');
@@ -92,8 +86,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 
                     const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-                    console.log('isDeleteIncidentFlagSuccess:');
-                    console.log(isDeleteIncidentFlagSuccess);
+                    Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
                     if (!isDeleteIncidentFlagSuccess) {
                         return callback('Failed to delete incident flag');
@@ -103,8 +96,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                 const eventScheduler = new EventScheduler();
                 const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, context.functionName);
 
-                console.log('isDeleteEventSuccess:');
-                console.log(isDeleteEventSuccess);
+                Logger.log('isDeleteEventSuccess', isDeleteEventSuccess);
 
                 if (!isDeleteEventSuccess) {
                     return callback('Failed to delete scheduled event');
@@ -112,28 +104,24 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
             } else {
                 const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), Duration.ThreeHundredSeconds);
 
-                console.log('metricTimeRange:');
-                console.log(JSON.stringify(metricTimeRange));
+                Logger.logJson('metricTimeRange', metricTimeRange);
 
                 const metricData = new MetricData();
                 const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmStatus.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
 
-                console.log('metricErrorRates:');
-                console.log(JSON.stringify(metricErrorRates));
+                Logger.logJson('metricErrorRates', metricErrorRates);
 
                 const errorRateThreshold = new ErrorRateThreshold();
                 const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
 
-                console.log('isExceedThreshold:');
-                console.log(isExceedThreshold);
+                Logger.log('isExceedThreshold', isExceedThreshold);
 
                 if (isExceedThreshold) {
 
                     const notificationFlag = new NotificationFlag();
                     const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-                    console.log('isIncidentFlagExist:');
-                    console.log(isIncidentFlagExist);
+                    Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
                     if (!isIncidentFlagExist) {
                         const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
@@ -144,8 +132,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
     
                         const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
     
-                        console.log('isCreateIncidentSuccess:');
-                        console.log(isCreateIncidentSuccess);
+                        Logger.log('isCreateIncidentSuccess', isCreateIncidentSuccess);
     
                         if (!isCreateIncidentSuccess) {
                             return callback('Failed to create incident');
@@ -153,8 +140,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 
                         const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-                        console.log('isPutIncidentFlagSuccess:');
-                        console.log(isPutIncidentFlagSuccess);
+                        Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
 
                         if (!isPutIncidentFlagSuccess) {
                             return callback('Failed to put incident flag to bucket');
