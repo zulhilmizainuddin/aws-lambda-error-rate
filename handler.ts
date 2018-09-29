@@ -2,15 +2,14 @@ import {APIGatewayEvent, SNSEvent, Context, Callback} from 'aws-lambda';
 
 import {AlarmState} from './model/AlarmState';
 import {AlarmStatus, AlarmNotification} from './model/AlarmNotification';
+import {EnvironmentVariable} from './model/EnvironmentVariable';
 import {ErrorRateThreshold} from './model/ErrorRateThreshold';
-import {EventRuleInput} from './model/EventRule';
 import {EventScheduler} from './model/EventScheduler';
 import {IncidentWebhook} from './model/IncidentWebhook';
 import {MetricErrorRate, MetricData} from './model/MetricData';
 import {MetricTimeRange, MetricTimeRangeHelper} from './model/MetricTimeRange';
 import {NotificationFlag} from './model/NotificationFlag';
 import {PagerTreeWebhook} from './model/PagerTreeWebhook';
-import {StackDetail} from './model/StackDetail';
 
 import {Duration} from './enum/Duration';
 import {Period} from './enum/Period';
@@ -19,21 +18,13 @@ import {Threshold} from './enum/Threshold';
 
 import {Logger} from './util/Logger';
 
-const STACK_NAME: string = 'aws-lambda-error-rate-dev';
-const PAGER_TREE_URL: string = 'https://api.pagertree.com/integration/int_Hk50sQvKm';
-const INCIDENT_FLAG_BUCKET_NAME: string = 'aws-lambda-error-rate-de-errorratenotificationfla-ea2sgss74yj3';
-
 module.exports.errorRate = async (event: any, context: Context, callback: Callback) => {
 
     try {
         Logger.logJson('event', event);
         Logger.logJson('context', context);
 
-        const stackDetail = new StackDetail();
-        const stackOutput: { [key: string]: string } | null = await stackDetail.getStackOutputs(STACK_NAME);
-        if (!stackOutput) {
-            return callback('Failed to get stack outputs');
-        }
+        const envVar: EnvironmentVariable = process.env as any as EnvironmentVariable;
 
         if (event.Records) {
             Logger.log('eventType', 'SNSEvent');
@@ -70,12 +61,12 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 
             if (activeAlarmState === 'OK') {
                 const notificationFlag = new NotificationFlag();
-                const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+                const isIncidentFlagExist: boolean = await notificationFlag.getFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
                 Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
                 if (isIncidentFlagExist) {
-                    const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(PAGER_TREE_URL, alarmStatus.stateChangeTime);
+                    const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(envVar.INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
                     const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
 
                     Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
@@ -84,7 +75,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                         return callback('Failed to resolve incident');
                     }
 
-                    const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+                    const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
                     Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
@@ -119,13 +110,13 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                 if (isExceedThreshold) {
 
                     const notificationFlag = new NotificationFlag();
-                    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+                    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
                     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
                     if (!isIncidentFlagExist) {
                         const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
-                            PAGER_TREE_URL,
+                            envVar.INCIDENT_INTEGRATION_URL,
                             alarmStatus.stateChangeTime,
                             alarmStatus.alarmName,
                             `Error percentage > ${Threshold.OnePercent}% for at least ${Duration.ThreeHundredSeconds} seconds`);
@@ -138,7 +129,7 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
                             return callback('Failed to create incident');
                         }
 
-                        const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+                        const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
                         Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
 
