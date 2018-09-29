@@ -129,29 +129,36 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 
                 if (isExceedThreshold) {
 
-                    const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
-                        PAGER_TREE_URL,
-                        alarmStatus.stateChangeTime,
-                        alarmStatus.alarmName,
-                        `Error percentage > ${Threshold.OnePercent}% for at least ${Duration.ThreeHundredSeconds} seconds`);
-
-                    const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
-
-                    console.log('isCreateIncidentSuccess:');
-                    console.log(isCreateIncidentSuccess);
-
-                    if (!isCreateIncidentSuccess) {
-                        return callback('Failed to create incident');
-                    }
-
                     const notificationFlag = new NotificationFlag();
-                    const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+                    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-                    console.log('isPutIncidentFlagSuccess:');
-                    console.log(isPutIncidentFlagSuccess);
+                    console.log('isIncidentFlagExist:');
+                    console.log(isIncidentFlagExist);
 
-                    if (!isPutIncidentFlagSuccess) {
-                        return callback('Failed to put incident flag to bucket');
+                    if (!isIncidentFlagExist) {
+                        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
+                            PAGER_TREE_URL,
+                            alarmStatus.stateChangeTime,
+                            alarmStatus.alarmName,
+                            `Error percentage > ${Threshold.OnePercent}% for at least ${Duration.ThreeHundredSeconds} seconds`);
+    
+                        const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
+    
+                        console.log('isCreateIncidentSuccess:');
+                        console.log(isCreateIncidentSuccess);
+    
+                        if (!isCreateIncidentSuccess) {
+                            return callback('Failed to create incident');
+                        }
+
+                        const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+
+                        console.log('isPutIncidentFlagSuccess:');
+                        console.log(isPutIncidentFlagSuccess);
+
+                        if (!isPutIncidentFlagSuccess) {
+                            return callback('Failed to put incident flag to bucket');
+                        }
                     }
                 }
             }
