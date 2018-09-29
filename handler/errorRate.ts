@@ -1,22 +1,22 @@
-import {APIGatewayEvent, SNSEvent, Context, Callback} from 'aws-lambda';
+import {SNSEvent, Context, Callback} from 'aws-lambda';
 
-import {AlarmState} from './model/AlarmState';
-import {AlarmStatus, AlarmNotification} from './model/AlarmNotification';
-import {EnvironmentVariable} from './model/EnvironmentVariable';
-import {ErrorRateThreshold} from './model/ErrorRateThreshold';
-import {EventScheduler} from './model/EventScheduler';
-import {IncidentWebhook} from './model/IncidentWebhook';
-import {MetricErrorRate, MetricData} from './model/MetricData';
-import {MetricTimeRange, MetricTimeRangeHelper} from './model/MetricTimeRange';
-import {NotificationFlag} from './model/NotificationFlag';
-import {PagerTreeWebhook} from './model/PagerTreeWebhook';
+import {AlarmState} from '../model/AlarmState';
+import {AlarmStatus, AlarmNotification} from '../model/AlarmNotification';
+import {EnvironmentVariable} from '../model/EnvironmentVariable';
+import {ErrorRateThreshold} from '../model/ErrorRateThreshold';
+import {EventScheduler} from '../model/EventScheduler';
+import {IncidentWebhook} from '../model/IncidentWebhook';
+import {MetricErrorRate, MetricData} from '../model/MetricData';
+import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange';
+import {NotificationFlag} from '../model/NotificationFlag';
+import {PagerTreeWebhook} from '../model/PagerTreeWebhook';
 
-import {Duration} from './enum/Duration';
-import {Period} from './enum/Period';
-import {RateExpression} from './enum/RateExpression';
-import {Threshold} from './enum/Threshold';
+import {Duration} from '../enum/Duration';
+import {Period} from '../enum/Period';
+import {RateExpression} from '../enum/RateExpression';
+import {Threshold} from '../enum/Threshold';
 
-import {Logger} from './util/Logger';
+import {Logger} from '../util/Logger';
 
 module.exports.errorRate = async (event: any, context: Context, callback: Callback) => {
 
@@ -151,11 +151,4 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
     } catch (ex) {
         return callback(ex);
     }
-};
-
-module.exports.error = (event: APIGatewayEvent, context: Context, callback: Callback) => {
-
-    const error = new Error('Something went wrong')
-
-    return callback(error);
 };

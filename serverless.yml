@@ -21,7 +21,7 @@ provider:
 
 functions:
   errorRate:
-    handler: handler.errorRate
+    handler: handler/errorRate.errorRate
     environment:
       STACK_NAME:
         Ref: AWS::StackName
@@ -30,7 +30,7 @@ functions:
       INCIDENT_INTEGRATION_URL: ${self:custom.${opt:region, 'ap-southeast-1'}.incidentIntegrationUrl}
 
   error:
-    handler: handler.error
+    handler: handler/error.error
     events:
       - schedule:
           description: Trigger error lambda
