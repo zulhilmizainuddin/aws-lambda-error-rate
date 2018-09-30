@@ -5,7 +5,7 @@
   "main": "handler.js",
   "scripts": {
     "build": "tsc",
-    "test": "env-cmd ./test/.env mocha --reporter spec ./test/model ./test/util"
+    "test": "env-cmd ./test/.env mocha --reporter spec ./test/enum ./test/model ./test/util"
   },
   "repository": {
     "type": "git",

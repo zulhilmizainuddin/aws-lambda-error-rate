@@ -27,7 +27,10 @@ functions:
         Ref: AWS::StackName
       INCIDENT_FLAG_BUCKET_NAME:
         Ref: ErrorRateNotificationFlagBucket
-      INCIDENT_INTEGRATION_URL: ${self:custom.${opt:region, 'ap-southeast-1'}.incidentIntegrationUrl}
+      INCIDENT_DEGENERATION_DURATION: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.degenerationDuration}
+      INCIDENT_RECOVERY_DURATION: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.recoveryDuration}
+      INCIDENT_THRESHOLD_PERCENTAGE: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.thresholdPercentage}
+      INCIDENT_INTEGRATION_URL: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.integrationUrl}
 
   error:
     handler: handler/error.error
