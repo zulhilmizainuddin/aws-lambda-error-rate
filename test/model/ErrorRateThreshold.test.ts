@@ -8,7 +8,7 @@ import {Threshold} from '../../enum/Threshold';
 import {Period} from '../../enum/Period';
 
 describe('ErrorRateThreshold', () => {
-    it('should exceed threshold', () => {
+    it('should cross degeneration threshold', () => {
         const metricErrorRates: MetricErrorRate[] = [
             {
                 "timestamp": new Date("2018-09-16T00:05:00.000Z"),
@@ -33,8 +33,30 @@ describe('ErrorRateThreshold', () => {
         ];
 
         const errorRateThreshold = new ErrorRateThreshold();
-        const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
+        const isCrossedThreshold: boolean = errorRateThreshold.isCrossedDegenerationThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
 
-        expect(isExceedThreshold).to.be.true;
+        expect(isCrossedThreshold).to.be.true;
+    });
+
+    it('should cross recovery threshold', () => {
+        const metricErrorRates: MetricErrorRate[] = [
+            {
+                "timestamp": new Date("2018-09-16T00:05:00.000Z"),
+                "errorRate": 0
+            },
+            {
+                "timestamp": new Date("2018-09-16T00:06:00.000Z"),
+                "errorRate": 0
+            },
+            {
+                "timestamp": new Date("2018-09-16T00:07:00.000Z"),
+                "errorRate": 0
+            }
+        ];
+
+        const errorRateThreshold = new ErrorRateThreshold();
+        const isCrossedThreshold: boolean = errorRateThreshold.isCrossedRecoveryThreshold(metricErrorRates, Threshold.OnePercent);
+
+        expect(isCrossedThreshold).to.be.true;
     });
 });

@@ -11,14 +11,22 @@ import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange';
 import {NotificationFlag} from '../model/NotificationFlag';
 import {PagerTreeWebhook} from '../model/PagerTreeWebhook';
 
-import {Duration} from '../enum/Duration';
+import {Duration, DurationHelper} from '../enum/Duration';
 import {Period} from '../enum/Period';
 import {RateExpression} from '../enum/RateExpression';
-import {Threshold} from '../enum/Threshold';
+import {Threshold, ThresholdHelper} from '../enum/Threshold';
 
 import {Logger} from '../util/Logger';
 
 const envVar: EnvironmentVariable = process.env as any as EnvironmentVariable;
+
+const INCIDENT_DEGENERATION_DURATION: Duration = DurationHelper.getDuration(parseInt(envVar.INCIDENT_DEGENERATION_DURATION));
+const INCIDENT_RECOVERY_DURATION: Duration = DurationHelper.getDuration(parseInt(envVar.INCIDENT_RECOVERY_DURATION));
+
+const INCIDENT_THRESHOLD_PERCENTAGE: Threshold = ThresholdHelper.getThreshold(parseInt(envVar.INCIDENT_THRESHOLD_PERCENTAGE));
+
+const INCIDENT_FLAG_BUCKET_NAME: string = envVar.INCIDENT_FLAG_BUCKET_NAME;
+const INCIDENT_INTEGRATION_URL: string = envVar.INCIDENT_INTEGRATION_URL;
 
 module.exports.errorRate = async (event: any, context: Context, callback: Callback) => {
 
@@ -84,7 +92,24 @@ const alarmStatusHandler = async (alarmStatus: AlarmStatus, context: Context) =>
 
 const alarmStateAlarmHandler = async (alarmStatus: AlarmStatus, context: Context) => {
 
-    const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), Duration.ThreeHundredSeconds);
+    const notificationFlag = new NotificationFlag();
+    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+
+    Logger.log('isIncidentFlagExist', isIncidentFlagExist);
+
+    if (!isIncidentFlagExist) {
+        Logger.log('incidentHandler', 'Degeneration');
+
+        incidentDegenerationHandler(alarmStatus, context);
+    } else {
+        Logger.log('incidentHandler', 'Recovery');
+
+        incidentRecoveryHandler(alarmStatus, context);
+    }
+};
+
+const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+    const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_DEGENERATION_DURATION);
 
     Logger.logJson('metricTimeRange', metricTimeRange);
 
@@ -94,52 +119,53 @@ const alarmStateAlarmHandler = async (alarmStatus: AlarmStatus, context: Context
     Logger.logJson('metricErrorRates', metricErrorRates);
 
     const errorRateThreshold = new ErrorRateThreshold();
-    const isExceedThreshold: boolean = errorRateThreshold.isExceedThreshold(metricErrorRates, Threshold.OnePercent, Duration.ThreeHundredSeconds, Period.SixtySeconds);
+    const isCrossedThreshold: boolean = errorRateThreshold.isCrossedDegenerationThreshold(metricErrorRates, INCIDENT_THRESHOLD_PERCENTAGE, INCIDENT_DEGENERATION_DURATION, Period.SixtySeconds);
 
-    Logger.log('isExceedThreshold', isExceedThreshold);
+    Logger.log('isCrossedThreshold', isCrossedThreshold);
 
-    if (isExceedThreshold) {
+    if (isCrossedThreshold) {
+        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
+            INCIDENT_INTEGRATION_URL,
+            alarmStatus.stateChangeTime,
+            alarmStatus.alarmName,
+            `Error percentage > ${INCIDENT_THRESHOLD_PERCENTAGE}% for at least ${INCIDENT_DEGENERATION_DURATION} seconds`);
+
+        const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
+
+        Logger.log('isCreateIncidentSuccess', isCreateIncidentSuccess);
+
+        if (!isCreateIncidentSuccess) {
+            throw new Error('Failed to create incident');
+        }
 
         const notificationFlag = new NotificationFlag();
-        const isIncidentFlagExist: boolean = await notificationFlag.getFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
-        Logger.log('isIncidentFlagExist', isIncidentFlagExist);
+        Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
 
-        if (!isIncidentFlagExist) {
-            const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
-                envVar.INCIDENT_INTEGRATION_URL,
-                alarmStatus.stateChangeTime,
-                alarmStatus.alarmName,
-                `Error percentage > ${Threshold.OnePercent}% for at least ${Duration.ThreeHundredSeconds} seconds`);
-
-            const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
-
-            Logger.log('isCreateIncidentSuccess', isCreateIncidentSuccess);
-
-            if (!isCreateIncidentSuccess) {
-                throw new Error('Failed to create incident');
-            }
-
-            const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
-
-            Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
-
-            if (!isPutIncidentFlagSuccess) {
-                throw new Error('Failed to put incident flag to bucket');
-            }
+        if (!isPutIncidentFlagSuccess) {
+            throw new Error('Failed to put incident flag to bucket');
         }
     }
 };
 
-const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+    const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_RECOVERY_DURATION);
 
-    const notificationFlag = new NotificationFlag();
-    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+    Logger.logJson('metricTimeRange', metricTimeRange);
 
-    Logger.log('isIncidentFlagExist', isIncidentFlagExist);
+    const metricData = new MetricData();
+    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmStatus.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
 
-    if (isIncidentFlagExist) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(envVar.INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
+    Logger.logJson('metricErrorRates', metricErrorRates);
+
+    const errorRateThreshold = new ErrorRateThreshold();
+    const isCrossedThreshold: boolean = errorRateThreshold.isCrossedRecoveryThreshold(metricErrorRates, INCIDENT_THRESHOLD_PERCENTAGE);
+
+    Logger.log('isCrossedThreshold', isCrossedThreshold);
+
+    if (isCrossedThreshold) {
+        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
         const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
 
         Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
@@ -148,7 +174,44 @@ const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) =
             throw new Error('Failed to resolve incident');
         }
 
-        const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(envVar.INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const notificationFlag = new NotificationFlag();
+        const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+
+        Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
+
+        if (!isDeleteIncidentFlagSuccess) {
+            throw new Error('Failed to delete incident flag');
+        }
+
+        const eventScheduler = new EventScheduler();
+        const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, context.functionName);
+
+        Logger.log('isDeleteEventSuccess', isDeleteEventSuccess);
+
+        if (!isDeleteEventSuccess) {
+            throw new Error('Failed to delete scheduled event');
+        }
+    }
+};
+
+const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+
+    const notificationFlag = new NotificationFlag();
+    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+
+    Logger.log('isIncidentFlagExist', isIncidentFlagExist);
+
+    if (isIncidentFlagExist) {
+        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
+        const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
+
+        Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
+
+        if (!isResolveIncidentSuccess) {
+            throw new Error('Failed to resolve incident');
+        }
+
+        const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
         Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
