@@ -9,8 +9,10 @@ before_install:
   - AWS_DEFAULT_REGION=ap-southeast-1
 
 install:
+  - npm install -g serverless
   - npm install
   
 script:
   - npm run build
   - npm test
+  - serverless package -v
