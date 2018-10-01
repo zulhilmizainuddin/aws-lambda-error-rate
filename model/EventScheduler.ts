@@ -2,7 +2,7 @@ import AWS = require('aws-sdk');
 import CloudWatchEvents = require('aws-sdk/clients/cloudwatchevents');
 import Lambda = require('aws-sdk/clients/lambda');
 
-import {AlarmStatus} from './AlarmNotification';
+import {AlarmEvent} from './AlarmNotification';
 
 import {RateExpression} from '../enum/RateExpression';
 
@@ -11,14 +11,14 @@ export class EventScheduler {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }
 
-    public async createEvent(alarmStatus: AlarmStatus, rateExpression: RateExpression, functionArn: string, functionName: string): Promise<boolean> {
+    public async createEvent(alarmEvent: AlarmEvent, rateExpression: RateExpression, functionArn: string, functionName: string): Promise<boolean> {
 
-        const ruleArn: string = await this.putRecurringRule(alarmStatus.alarmName, rateExpression);
+        const ruleArn: string = await this.putRecurringRule(alarmEvent.alarmName, rateExpression);
         if (!ruleArn) {
             return false;
         }
 
-        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(alarmStatus, functionArn);
+        const isPutTargetSuccess: boolean = await this.putRecurringRuleTarget(alarmEvent, functionArn);
         if (!isPutTargetSuccess) {
             return false;
         }
@@ -55,16 +55,16 @@ export class EventScheduler {
         });
     }
 
-    private putRecurringRuleTarget(alarmStatus: AlarmStatus, functionArn: string): Promise<boolean> {
+    private putRecurringRuleTarget(alarmEvent: AlarmEvent, functionArn: string): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
 
             const putTargetsRequest: CloudWatchEvents.PutTargetsRequest = {
-                Rule: alarmStatus.alarmName,
+                Rule: alarmEvent.alarmName,
                 Targets: [
                     {
-                        Id: alarmStatus.alarmName,
+                        Id: alarmEvent.alarmName,
                         Arn: functionArn,
-                        Input: JSON.stringify(alarmStatus)
+                        Input: JSON.stringify(alarmEvent)
                     }
                 ]
             };

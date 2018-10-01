@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 
-import {AlarmNotification, AlarmStatus} from '../../model/AlarmNotification';
+import {AlarmNotification, AlarmEvent} from '../../model/AlarmNotification';
 
 describe('AlarmNotification', () => {
     let event: any;
@@ -30,12 +30,12 @@ describe('AlarmNotification', () => {
         };
     });
 
-    it('should get alarm status', () => {
+    it('should get alarm event', () => {
         const alarmNotification = new AlarmNotification();
 
-        const alarmStatus: AlarmStatus | null = alarmNotification.extractAlarmStatus(event);
+        const alarmEvent: AlarmEvent | null = alarmNotification.extractAlarmEvent(event);
 
-        expect(alarmStatus).to.deep.equal({
+        expect(alarmEvent).to.deep.equal({
             alarmName: 'LambdaErrorAlarm',
             oldStateValue: 'OK',
             newStateValue: 'ALARM',

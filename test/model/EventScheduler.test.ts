@@ -2,19 +2,19 @@ import {expect} from 'chai';
 
 import * as sinon from 'sinon';
 
-import {AlarmStatus} from '../../model/AlarmNotification';
+import {AlarmEvent} from '../../model/AlarmNotification';
 import {EventScheduler} from '../../model/EventScheduler';
 
 import {RateExpression} from '../../enum/RateExpression';
 
 describe('EventScheduler', () => {
     let sandbox: any;
-    let alarmStatus: AlarmStatus;
+    let alarmEvent: AlarmEvent;
 
     before(() => {
         sandbox = sinon.createSandbox();
 
-        alarmStatus = {
+        alarmEvent = {
             "alarmName": "LambdaErrorAlarm",
             "oldStateValue": "OK",
             "newStateValue": "ALARM",
@@ -43,7 +43,7 @@ describe('EventScheduler', () => {
         });
 
         const isSuccess: boolean = await eventScheduler.createEvent(
-            alarmStatus,
+            alarmEvent,
             RateExpression.OneMinute,
             'arn:aws:lambda:ap-southeast-1:123456789012:function:aws-lambda-error-rate-dev-errorRate',
             'aws-lambda-error-rate-dev-errorRate');
@@ -67,7 +67,7 @@ describe('EventScheduler', () => {
             return true;
         });
 
-        const isDeleted: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, 'aws-lambda-error-rate-dev-errorRate');
+        const isDeleted: boolean = await eventScheduler.deleteEvent(alarmEvent.alarmName, 'aws-lambda-error-rate-dev-errorRate');
 
         expect(isDeleted).to.be.true;
     });

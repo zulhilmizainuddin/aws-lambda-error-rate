@@ -1,7 +1,7 @@
 import {SNSEvent, Context, Callback} from 'aws-lambda';
 
 import {AlarmState} from '../model/AlarmState';
-import {AlarmStatus, AlarmNotification} from '../model/AlarmNotification';
+import {AlarmEvent, AlarmNotification} from '../model/AlarmNotification';
 import {EnvironmentVariable} from '../model/EnvironmentVariable';
 import {ErrorRateThreshold} from '../model/ErrorRateThreshold';
 import {EventScheduler} from '../model/EventScheduler';
@@ -40,9 +40,9 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
             snsEventHandler(event, context);
 
         } else {
-            Logger.log('eventType', 'AlarmStatus');
+            Logger.log('eventType', 'AlarmEvent');
 
-            alarmStatusHandler(event, context);
+            alarmEventHandler(event, context);
         }
 
         return callback(null, {
@@ -58,16 +58,16 @@ module.exports.errorRate = async (event: any, context: Context, callback: Callba
 const snsEventHandler = async (snsEvent: SNSEvent, context: Context) => {
 
     const alarmNotification = new AlarmNotification();
-    const alarmStatus: AlarmStatus | null = alarmNotification.extractAlarmStatus(snsEvent);
+    const alarmEvent: AlarmEvent | null = alarmNotification.extractAlarmEvent(snsEvent);
 
-    Logger.logJson('alarmStatus', alarmStatus);
+    Logger.logJson('alarmEvent', alarmEvent);
 
-    if (!alarmStatus) {
-        throw new Error('Failed to extract alarm status');
+    if (!alarmEvent) {
+        throw new Error('Failed to extract alarm event');
     }
 
     const eventScheduler = new EventScheduler();
-    const isCreateEventSuccess: boolean = await eventScheduler.createEvent(alarmStatus, RateExpression.OneMinute, context.invokedFunctionArn, context.functionName);
+    const isCreateEventSuccess: boolean = await eventScheduler.createEvent(alarmEvent, RateExpression.OneMinute, context.invokedFunctionArn, context.functionName);
 
     Logger.log('isCreateEventSuccess', isCreateEventSuccess);
 
@@ -76,45 +76,45 @@ const snsEventHandler = async (snsEvent: SNSEvent, context: Context) => {
     }
 };
 
-const alarmStatusHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const alarmEventHandler = async (alarmEvent: AlarmEvent, context: Context) => {
 
     const alarmState = new AlarmState();
-    const activeAlarmState: string = await alarmState.getState(alarmStatus.alarmName);
+    const activeAlarmState: string = await alarmState.getState(alarmEvent.alarmName);
 
     Logger.log('activeAlarmState', activeAlarmState);
 
     if (activeAlarmState === 'ALARM') {
-        alarmStateAlarmHandler(alarmStatus, context);
+        alarmStateAlarmHandler(alarmEvent, context);
     } else {
-        alarmStateOkHandler(alarmStatus, context);
+        alarmStateOkHandler(alarmEvent, context);
     }
 };
 
-const alarmStateAlarmHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const alarmStateAlarmHandler = async (alarmEvent: AlarmEvent, context: Context) => {
 
     const incidentFlag = new IncidentFlag();
-    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmEvent.alarmName);
 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
     if (!isIncidentFlagExist) {
         Logger.log('incidentHandler', 'Degeneration');
 
-        incidentDegenerationHandler(alarmStatus, context);
+        incidentDegenerationHandler(alarmEvent, context);
     } else {
         Logger.log('incidentHandler', 'Recovery');
 
-        incidentRecoveryHandler(alarmStatus, context);
+        incidentRecoveryHandler(alarmEvent, context);
     }
 };
 
-const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Context) => {
     const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_DEGENERATION_DURATION);
 
     Logger.logJson('metricTimeRange', metricTimeRange);
 
     const metricData = new MetricData();
-    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmStatus.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
+    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
@@ -126,8 +126,8 @@ const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Co
     if (isCrossedThreshold) {
         const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
             INCIDENT_INTEGRATION_URL,
-            alarmStatus.stateChangeTime,
-            alarmStatus.alarmName,
+            alarmEvent.stateChangeTime,
+            alarmEvent.alarmName,
             `Error percentage > ${INCIDENT_THRESHOLD_PERCENTAGE}% for at least ${INCIDENT_DEGENERATION_DURATION} seconds`);
 
         const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
@@ -139,7 +139,7 @@ const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Co
         }
 
         const incidentFlag = new IncidentFlag();
-        const isPutIncidentFlagSuccess: boolean = await incidentFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const isPutIncidentFlagSuccess: boolean = await incidentFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmEvent.alarmName);
 
         Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
 
@@ -149,13 +149,13 @@ const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Co
     }
 };
 
-const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const incidentRecoveryHandler = async (alarmEvent: AlarmEvent, context: Context) => {
     const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_RECOVERY_DURATION);
 
     Logger.logJson('metricTimeRange', metricTimeRange);
 
     const metricData = new MetricData();
-    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmStatus.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
+    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
@@ -165,7 +165,7 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
     Logger.log('isCrossedThreshold', isCrossedThreshold);
 
     if (isCrossedThreshold) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
+        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmEvent.stateChangeTime);
         const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
 
         Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
@@ -175,7 +175,7 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
         }
 
         const incidentFlag = new IncidentFlag();
-        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmEvent.alarmName);
 
         Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
@@ -184,7 +184,7 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
         }
 
         const eventScheduler = new EventScheduler();
-        const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, context.functionName);
+        const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmEvent.alarmName, context.functionName);
 
         Logger.log('isDeleteEventSuccess', isDeleteEventSuccess);
 
@@ -194,15 +194,15 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
     }
 };
 
-const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) => {
+const alarmStateOkHandler = async (alarmEvent: AlarmEvent, context: Context) => {
 
     const incidentFlag = new IncidentFlag();
-    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmEvent.alarmName);
 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
     if (isIncidentFlagExist) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmStatus.stateChangeTime);
+        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmEvent.stateChangeTime);
         const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
 
         Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
@@ -211,7 +211,7 @@ const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) =
             throw new Error('Failed to resolve incident');
         }
 
-        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmEvent.alarmName);
 
         Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
@@ -221,7 +221,7 @@ const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) =
     }
 
     const eventScheduler = new EventScheduler();
-    const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmStatus.alarmName, context.functionName);
+    const isDeleteEventSuccess: boolean = await eventScheduler.deleteEvent(alarmEvent.alarmName, context.functionName);
 
     Logger.log('isDeleteEventSuccess', isDeleteEventSuccess);
 
