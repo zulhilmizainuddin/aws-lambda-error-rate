@@ -39,7 +39,7 @@ functions:
       - schedule:
           description: Trigger error lambda
           rate: rate(1 minute)
-          enabled: false
+          enabled: ${self:custom.${opt:region, 'ap-southeast-1'}.errorLambda.schedule.enabled}
 
 resources:
   Resources:
