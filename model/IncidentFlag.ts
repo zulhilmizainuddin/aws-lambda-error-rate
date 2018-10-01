@@ -1,7 +1,7 @@
 import AWS = require('aws-sdk');
 import S3 = require('aws-sdk/clients/s3');
 
-export class NotificationFlag {
+export class IncidentFlag {
     public constructor() {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }

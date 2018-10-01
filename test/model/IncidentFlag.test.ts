@@ -2,9 +2,9 @@ import {expect} from 'chai';
 
 import * as sinon from 'sinon';
 
-import {NotificationFlag} from '../../model/NotificationFlag';
+import {IncidentFlag} from '../../model/IncidentFlag';
 
-describe('NotificationFlag', () => {
+describe('IncidentFlag', () => {
     let sandbox: any;
     let bucketName: string;
     let alarmName: string;
@@ -48,34 +48,34 @@ describe('NotificationFlag', () => {
     });
 
     it('should put flag to S3 bucket', async () => {
-        const notificationFlag = new NotificationFlag();
-        sandbox.stub(NotificationFlag.prototype, 'putObject').callsFake(() => {
+        const incidentFlag = new IncidentFlag();
+        sandbox.stub(IncidentFlag.prototype, 'putObject').callsFake(() => {
             return true;
         });
 
-        const isPutFlagSuccess: boolean = await notificationFlag.putFlag(bucketName, alarmName);
+        const isPutFlagSuccess: boolean = await incidentFlag.putFlag(bucketName, alarmName);
 
         expect(isPutFlagSuccess).to.be.true;
     });
 
     it('should get flag from S3 bucket', async () => {
-        const notificationFlag = new NotificationFlag();
-        sandbox.stub(NotificationFlag.prototype, 'getObject').callsFake(() => {
+        const incidentFlag = new IncidentFlag();
+        sandbox.stub(IncidentFlag.prototype, 'getObject').callsFake(() => {
             return true;
         });
 
-        const isGetFlagSuccess: boolean = await notificationFlag.getFlag(bucketName, alarmName);
+        const isGetFlagSuccess: boolean = await incidentFlag.getFlag(bucketName, alarmName);
 
         expect(isGetFlagSuccess).to.be.true;
     });
 
     it('should delete flag from S3 bucket', async () => {
-        const notificationFlag = new NotificationFlag();
-        sandbox.stub(NotificationFlag.prototype, 'deleteObject').callsFake(() => {
+        const incidentFlag = new IncidentFlag();
+        sandbox.stub(IncidentFlag.prototype, 'deleteObject').callsFake(() => {
             return true;
         });
 
-        const isDeleteFlagSuccess: boolean = await notificationFlag.deleteFlag(bucketName, alarmName);
+        const isDeleteFlagSuccess: boolean = await incidentFlag.deleteFlag(bucketName, alarmName);
 
         expect(isDeleteFlagSuccess).to.be.true;
     });

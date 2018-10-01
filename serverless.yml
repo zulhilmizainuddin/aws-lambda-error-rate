@@ -26,7 +26,7 @@ functions:
       STACK_NAME:
         Ref: AWS::StackName
       INCIDENT_FLAG_BUCKET_NAME:
-        Ref: ErrorRateNotificationFlagBucket
+        Ref: ErrorRateIncidentFlagBucket
       INCIDENT_DEGENERATION_DURATION: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.degenerationDuration}
       INCIDENT_RECOVERY_DURATION: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.recoveryDuration}
       INCIDENT_THRESHOLD_PERCENTAGE: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.thresholdPercentage}
@@ -96,7 +96,7 @@ resources:
         SourceArn:
           Ref: LambdaErrorSnsTopic
 
-    ErrorRateNotificationFlagBucket:
+    ErrorRateIncidentFlagBucket:
       Type: AWS::S3::Bucket
       Properties:
         AccessControl: Private
@@ -146,12 +146,12 @@ resources:
           - 'LambdaErrorSnsTopic'
           - 'TopicName'
 
-    ErrorRateNotificationFlagBucketArn:
+    ErrorRateIncidentFlagBucketArn:
       Value:
         Fn::GetAtt:
-          - 'ErrorRateNotificationFlagBucket'
+          - 'ErrorRateIncidentFlagBucket'
           - 'Arn'
 
-    ErrorRateNotificationFlagBucketName:
+    ErrorRateIncidentFlagBucketName:
       Value:
-        Ref: ErrorRateNotificationFlagBucket
+        Ref: ErrorRateIncidentFlagBucket

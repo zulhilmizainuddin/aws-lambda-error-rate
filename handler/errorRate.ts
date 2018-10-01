@@ -5,10 +5,10 @@ import {AlarmStatus, AlarmNotification} from '../model/AlarmNotification';
 import {EnvironmentVariable} from '../model/EnvironmentVariable';
 import {ErrorRateThreshold} from '../model/ErrorRateThreshold';
 import {EventScheduler} from '../model/EventScheduler';
+import {IncidentFlag} from '../model/IncidentFlag';
 import {IncidentWebhook} from '../model/IncidentWebhook';
 import {MetricErrorRate, MetricData} from '../model/MetricData';
 import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange';
-import {NotificationFlag} from '../model/NotificationFlag';
 import {PagerTreeWebhook} from '../model/PagerTreeWebhook';
 
 import {Duration, DurationHelper} from '../enum/Duration';
@@ -92,8 +92,8 @@ const alarmStatusHandler = async (alarmStatus: AlarmStatus, context: Context) =>
 
 const alarmStateAlarmHandler = async (alarmStatus: AlarmStatus, context: Context) => {
 
-    const notificationFlag = new NotificationFlag();
-    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+    const incidentFlag = new IncidentFlag();
+    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
@@ -138,8 +138,8 @@ const incidentDegenerationHandler = async (alarmStatus: AlarmStatus, context: Co
             throw new Error('Failed to create incident');
         }
 
-        const notificationFlag = new NotificationFlag();
-        const isPutIncidentFlagSuccess: boolean = await notificationFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const incidentFlag = new IncidentFlag();
+        const isPutIncidentFlagSuccess: boolean = await incidentFlag.putFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
         Logger.log('isPutIncidentFlagSuccess', isPutIncidentFlagSuccess);
 
@@ -174,8 +174,8 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
             throw new Error('Failed to resolve incident');
         }
 
-        const notificationFlag = new NotificationFlag();
-        const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const incidentFlag = new IncidentFlag();
+        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
         Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
@@ -196,8 +196,8 @@ const incidentRecoveryHandler = async (alarmStatus: AlarmStatus, context: Contex
 
 const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) => {
 
-    const notificationFlag = new NotificationFlag();
-    const isIncidentFlagExist: boolean = await notificationFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+    const incidentFlag = new IncidentFlag();
+    const isIncidentFlagExist: boolean = await incidentFlag.getFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
@@ -211,7 +211,7 @@ const alarmStateOkHandler = async (alarmStatus: AlarmStatus, context: Context) =
             throw new Error('Failed to resolve incident');
         }
 
-        const isDeleteIncidentFlagSuccess: boolean = await notificationFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
+        const isDeleteIncidentFlagSuccess: boolean = await incidentFlag.deleteFlag(INCIDENT_FLAG_BUCKET_NAME, alarmStatus.alarmName);
 
         Logger.log('isDeleteIncidentFlagSuccess', isDeleteIncidentFlagSuccess);
 
