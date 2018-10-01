@@ -7,6 +7,7 @@ import {ErrorRateThreshold} from '../model/ErrorRateThreshold';
 import {EventScheduler} from '../model/EventScheduler';
 import {IncidentFlag} from '../model/IncidentFlag';
 import {IncidentWebhook} from '../model/IncidentWebhook';
+import {IncidentWebhookFactory} from '../model/IncidentWebhookFactory';
 import {MetricErrorRate, MetricData} from '../model/MetricData';
 import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange';
 import {PagerTreeWebhook} from '../model/PagerTreeWebhook';
@@ -15,6 +16,7 @@ import {Duration, DurationHelper} from '../enum/Duration';
 import {Period} from '../enum/Period';
 import {RateExpression} from '../enum/RateExpression';
 import {Threshold, ThresholdHelper} from '../enum/Threshold';
+import {Webhook, WebhookHelper} from '../enum/Webhook';
 
 import {Logger} from '../util/Logger';
 
@@ -26,7 +28,9 @@ const INCIDENT_RECOVERY_DURATION: Duration = DurationHelper.getDuration(parseInt
 const INCIDENT_THRESHOLD_PERCENTAGE: Threshold = ThresholdHelper.getThreshold(parseInt(envVar.INCIDENT_THRESHOLD_PERCENTAGE));
 
 const INCIDENT_FLAG_BUCKET_NAME: string = envVar.INCIDENT_FLAG_BUCKET_NAME;
+
 const INCIDENT_INTEGRATION_URL: string = envVar.INCIDENT_INTEGRATION_URL;
+const INCIDENT_INTEGRATION_WEBHOOK: Webhook = WebhookHelper.getWebhook(envVar.INCIDENT_INTEGRATION_WEBHOOK);
 
 module.exports.errorRate = async (event: any, context: Context, callback: Callback) => {
 
@@ -124,13 +128,12 @@ const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Cont
     Logger.log('isCrossedThreshold', isCrossedThreshold);
 
     if (isCrossedThreshold) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(
-            INCIDENT_INTEGRATION_URL,
-            alarmEvent.stateChangeTime,
-            alarmEvent.alarmName,
-            `Error percentage > ${INCIDENT_THRESHOLD_PERCENTAGE}% for at least ${INCIDENT_DEGENERATION_DURATION} seconds`);
-
-        const isCreateIncidentSuccess: boolean = await incidentWebhook.createIncident();
+        const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
+        const isCreateIncidentSuccess: boolean =
+            await incidentWebhook.createIncident(
+                alarmEvent.stateChangeTime,
+                alarmEvent.alarmName,
+                `Error percentage > ${INCIDENT_THRESHOLD_PERCENTAGE}% for at least ${INCIDENT_DEGENERATION_DURATION} seconds`);
 
         Logger.log('isCreateIncidentSuccess', isCreateIncidentSuccess);
 
@@ -165,8 +168,8 @@ const incidentRecoveryHandler = async (alarmEvent: AlarmEvent, context: Context)
     Logger.log('isCrossedThreshold', isCrossedThreshold);
 
     if (isCrossedThreshold) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmEvent.stateChangeTime);
-        const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
+        const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
+        const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident(alarmEvent.stateChangeTime);
 
         Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
 
@@ -202,8 +205,8 @@ const alarmStateOkHandler = async (alarmEvent: AlarmEvent, context: Context) => 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
     if (isIncidentFlagExist) {
-        const incidentWebhook: IncidentWebhook = new PagerTreeWebhook(INCIDENT_INTEGRATION_URL, alarmEvent.stateChangeTime);
-        const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident();
+        const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
+        const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident(alarmEvent.stateChangeTime);
 
         Logger.log('isResolveIncidentSuccess', isResolveIncidentSuccess);
 

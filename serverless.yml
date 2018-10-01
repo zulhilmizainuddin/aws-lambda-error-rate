@@ -31,6 +31,7 @@ functions:
       INCIDENT_RECOVERY_DURATION: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.recoveryDuration}
       INCIDENT_THRESHOLD_PERCENTAGE: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.thresholdPercentage}
       INCIDENT_INTEGRATION_URL: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.integrationUrl}
+      INCIDENT_INTEGRATION_WEBHOOK: ${self:custom.${opt:region, 'ap-southeast-1'}.incident.integrationWebhook}
 
   error:
     handler: handler/error.error

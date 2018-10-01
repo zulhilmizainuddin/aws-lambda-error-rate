@@ -15,7 +15,7 @@ describe('PagerTreeWebhook', () => {
     before(() => {
         sandbox = sinon.createSandbox();
 
-        url = 'https://api.pagertree.com/integration/int_Hk50sQvKm';
+        url = 'https://api.pagertree.com/integration/integrationIdHere';
         id = '2018-09-27T07:14:44.299+0000';
         title = 'LambdaErrorAlarm';
         description = 'Error percentage > 1% for at least 300 seconds';
@@ -26,23 +26,23 @@ describe('PagerTreeWebhook', () => {
     });
 
     it('should create incident', async () => {
-        const pagerTreeWebhook = new PagerTreeWebhook(url, id, title, description);
+        const pagerTreeWebhook = new PagerTreeWebhook(url);
         sandbox.stub(PagerTreeWebhook.prototype, 'postCreateIncident').callsFake(() => {
             return true;
         });
 
-        const isSuccess: boolean = await pagerTreeWebhook.createIncident();
+        const isSuccess: boolean = await pagerTreeWebhook.createIncident(id, title, description);
 
         expect(isSuccess).to.be.true;
     });
 
     it('should resolve incident', async () => {
-        const pagerTreeWebhook = new PagerTreeWebhook(url, id);
+        const pagerTreeWebhook = new PagerTreeWebhook(url);
         sandbox.stub(PagerTreeWebhook.prototype, 'postResolveIncident').callsFake(() => {
             return true;
         });
 
-        const isSuccess: boolean = await pagerTreeWebhook.resolveIncident();
+        const isSuccess: boolean = await pagerTreeWebhook.resolveIncident(id);
 
         expect(isSuccess).to.be.true;
     });

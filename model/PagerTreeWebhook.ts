@@ -2,25 +2,27 @@ import request = require('request-promise-native');
 
 import {IncidentWebhook} from "./IncidentWebhook";
 
-export class PagerTreeWebhook implements IncidentWebhook {
-    public constructor(private url: string, private id: string, private title?: string, private description?: string) { }
+export class PagerTreeWebhook extends IncidentWebhook {
+    public constructor(protected url: string) {
+        super(url);
+    }
 
-    public async createIncident(): Promise<boolean> {
-        const isSuccess: boolean = await this.postCreateIncident();
+    public async createIncident(id: string, title: string, description: string): Promise<boolean> {
+        const isSuccess: boolean = await this.postCreateIncident(id, title, description);
 
         return isSuccess;
     }
 
-    private async postCreateIncident(): Promise<boolean> {
+    private async postCreateIncident(id: string, title: string, description: string): Promise<boolean> {
 
         const options: any = {
             method: 'POST',
             uri: this.url,
             body: {
                 event_type: 'create',
-                Id: this.id,
-                Title: this.title,
-                Description: this.description
+                Id: id,
+                Title: title,
+                Description: description
             },
             json: true
         };
@@ -30,20 +32,20 @@ export class PagerTreeWebhook implements IncidentWebhook {
         return true;
     }
 
-    public async resolveIncident(): Promise<boolean> {
-        const isSuccess: boolean = await this.postResolveIncident();
+    public async resolveIncident(id: string): Promise<boolean> {
+        const isSuccess: boolean = await this.postResolveIncident(id);
 
         return isSuccess;
     }
 
-    private async postResolveIncident(): Promise<boolean> {
+    private async postResolveIncident(id: string): Promise<boolean> {
 
         const options: any = {
             method: 'POST',
             uri: this.url,
             body: {
                 event_type: 'resolve',
-                Id: this.id
+                Id: id
             },
             json: true
         };
@@ -51,5 +53,5 @@ export class PagerTreeWebhook implements IncidentWebhook {
         await request(options);
 
         return true;
-    }
+    }    
 }
