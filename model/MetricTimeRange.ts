@@ -2,23 +2,23 @@ import moment from 'moment';
 
 import {Duration} from '../enum/Duration';
 
-export interface MetricTimeRange {
+export interface MetricTime {
     start: Date;
     end: Date;
 }
 
-export class MetricTimeRangeHelper {
-    public static calculate(stateTimeChange: string, duration: Duration): MetricTimeRange {
-        const parsedMoment: moment.Moment = moment(stateTimeChange).utc();
+export class MetricTimeRange {
+    public calculate(dateTime: string, duration: Duration): MetricTime {
+        const parsedMoment: moment.Moment = moment(dateTime).utc();
 
-        const endTime: moment.Moment = parsedMoment.clone().add(1, 'seconds');
+        const endTime: moment.Moment = parsedMoment.clone();
         const startTime: moment.Moment = endTime.clone().subtract(duration, 'seconds');
 
-        const metricTimeRange: MetricTimeRange = {
+        const metricTime: MetricTime = {
             start: startTime.toDate(),
             end: endTime.toDate()
         };
 
-        return metricTimeRange;
+        return metricTime;
     }
 }

@@ -1,7 +1,7 @@
 import AWS = require('aws-sdk');
 import CloudWatch = require('aws-sdk/clients/cloudwatch');
 
-import {MetricTimeRange} from './MetricTimeRange';
+import {MetricTime} from './MetricTimeRange';
 import {Period} from '../enum/Period';
 
 export interface MetricErrorRate {
@@ -14,8 +14,8 @@ export class MetricData {
         AWS.config.update({region: process.env.AWS_DEFAULT_REGION});
     }
 
-    public async getMetricErrorRates(functionName: string, metricTimeRange: MetricTimeRange, period: Period): Promise<MetricErrorRate[]> {
-        const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTimeRange, period);
+    public async getMetricErrorRates(functionName: string, metricTime: MetricTime, period: Period): Promise<MetricErrorRate[]> {
+        const param: CloudWatch.GetMetricDataInput = this.buildMetricDataInput(functionName, metricTime, period);
 
         const data: CloudWatch.GetMetricDataOutput = await this.getMetricDataOutput(param);
 
@@ -59,7 +59,7 @@ export class MetricData {
         });
     }
 
-    private buildMetricDataInput(functionName: string, metricTimeRange: MetricTimeRange, period: Period): CloudWatch.GetMetricDataInput {
+    private buildMetricDataInput(functionName: string, metricTime: MetricTime, period: Period): CloudWatch.GetMetricDataInput {
         const getMetricDataInput: CloudWatch.GetMetricDataInput = {
             MetricDataQueries: [
                 {
@@ -103,8 +103,8 @@ export class MetricData {
                     }
                 }
             ],
-            StartTime: metricTimeRange.start,
-            EndTime: metricTimeRange.end,
+            StartTime: metricTime.start,
+            EndTime: metricTime.end,
             ScanBy: 'TimestampAscending'
         };
 

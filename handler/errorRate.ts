@@ -9,8 +9,7 @@ import {IncidentFlag} from '../model/IncidentFlag';
 import {IncidentWebhook} from '../model/IncidentWebhook';
 import {IncidentWebhookFactory} from '../model/IncidentWebhookFactory';
 import {MetricErrorRate, MetricData} from '../model/MetricData';
-import {MetricTimeRange, MetricTimeRangeHelper} from '../model/MetricTimeRange';
-import {PagerTreeWebhook} from '../model/PagerTreeWebhook';
+import {MetricTime, MetricTimeRange} from '../model/MetricTimeRange';
 
 import {Duration, DurationHelper} from '../enum/Duration';
 import {Period} from '../enum/Period';
@@ -113,12 +112,13 @@ const alarmStateAlarmHandler = async (alarmEvent: AlarmEvent, context: Context) 
 };
 
 const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Context) => {
-    const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_DEGENERATION_DURATION);
+    const metricTimeRange = new MetricTimeRange();
+    const metricTime: MetricTime = metricTimeRange.calculate(new Date().toISOString(), INCIDENT_DEGENERATION_DURATION);
 
-    Logger.logJson('metricTimeRange', metricTimeRange);
+    Logger.logJson('metricTime', metricTime);
 
     const metricData = new MetricData();
-    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
+    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTime, Period.SixtySeconds);
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
@@ -153,12 +153,13 @@ const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Cont
 };
 
 const incidentRecoveryHandler = async (alarmEvent: AlarmEvent, context: Context) => {
-    const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate(new Date().toISOString(), INCIDENT_RECOVERY_DURATION);
+    const metricTimeRange = new MetricTimeRange();
+    const metricTime: MetricTime = metricTimeRange.calculate(new Date().toISOString(), INCIDENT_RECOVERY_DURATION);
 
-    Logger.logJson('metricTimeRange', metricTimeRange);
+    Logger.logJson('metricTime', metricTime);
 
     const metricData = new MetricData();
-    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTimeRange, Period.SixtySeconds);
+    const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates(alarmEvent.erroredFunctionName, metricTime, Period.SixtySeconds);
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 

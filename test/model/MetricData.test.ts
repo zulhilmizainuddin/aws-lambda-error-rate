@@ -4,7 +4,7 @@ import * as sinon from 'sinon';
 
 import {Duration} from '../../enum/Duration';
 import {MetricData, MetricErrorRate} from '../../model/MetricData';
-import {MetricTimeRange, MetricTimeRangeHelper} from '../../model/MetricTimeRange';
+import {MetricTime, MetricTimeRange} from '../../model/MetricTimeRange';
 import {Period} from '../../enum/Period';
 
 describe('MetricData', () => {
@@ -94,14 +94,15 @@ describe('MetricData', () => {
     });
 
     it('get metric error rates', async () => {
-        const metricTimeRange: MetricTimeRange = MetricTimeRangeHelper.calculate('2018-09-16T00:10:56.062+0000', Duration.ThreeHundredSeconds);
+        const metricTimeRange = new MetricTimeRange();
+        const metricTime: MetricTime = metricTimeRange.calculate('2018-09-16T00:10:56.062+0000', Duration.ThreeHundredSeconds);
 
         const metricData = new MetricData();
         sandbox.stub(MetricData.prototype, 'getMetricDataOutput').callsFake(() => {
             return metricDataOutput;
         });
 
-        const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates('aws-lambda-error-rate-dev-error', metricTimeRange, Period.SixtySeconds);
+        const metricErrorRates: MetricErrorRate[] = await metricData.getMetricErrorRates('aws-lambda-error-rate-dev-error', metricTime, Period.SixtySeconds);
 
         expect(metricErrorRates).to.deep.equals([
             {
