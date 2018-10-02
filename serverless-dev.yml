@@ -1,0 +1,20 @@
+ap-southeast-1:
+  region: ap-southeast-1
+  memorySize: 128
+  timeout: 10
+  vpc:
+    id: vpc-xxxxxxxx
+    subnetIds:
+      - subnet-yyyyyyyy
+      - subnet-zzzzzzzz
+  
+  incident:
+    degenerationDuration: 300
+    recoveryDuration: 180
+    thresholdPercentage: 1
+    integrationUrl: https://api.pagertree.com/integration/integrationIdHere
+    integrationWebhook: PagerTree
+
+  errorLambda:
+    schedule:
+      enabled: false
