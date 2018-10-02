@@ -12,6 +12,7 @@ import {MetricErrorRate, MetricData} from '../model/MetricData';
 import {MetricTime, MetricTimeRange} from '../model/MetricTimeRange';
 
 import {Duration, DurationHelper} from '../enum/Duration';
+import {ErrorRateState} from '../enum/ErrorRateState';
 import {Period} from '../enum/Period';
 import {RateExpression} from '../enum/RateExpression';
 import {Threshold, ThresholdHelper} from '../enum/Threshold';
@@ -101,17 +102,17 @@ const alarmStateAlarmHandler = async (alarmEvent: AlarmEvent, context: Context) 
     Logger.log('isIncidentFlagExist', isIncidentFlagExist);
 
     if (!isIncidentFlagExist) {
-        Logger.log('incidentHandler', 'Degeneration');
+        Logger.log('incidentHandler', 'preIncidentHandler');
 
-        incidentDegenerationHandler(alarmEvent, context);
+        preIncidentHandler(alarmEvent, context);
     } else {
-        Logger.log('incidentHandler', 'Recovery');
+        Logger.log('incidentHandler', 'postIncidentHandler');
 
-        incidentRecoveryHandler(alarmEvent, context);
+        postIncidentHandler(alarmEvent, context);
     }
 };
 
-const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Context) => {
+const preIncidentHandler = async (alarmEvent: AlarmEvent, context: Context) => {
     const metricTimeRange = new MetricTimeRange();
     const metricTime: MetricTime = metricTimeRange.calculate(new Date().toISOString(), INCIDENT_DEGENERATION_DURATION);
 
@@ -122,12 +123,12 @@ const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Cont
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
-    const errorRateThreshold = new ErrorRateThreshold();
-    const isCrossedThreshold: boolean = errorRateThreshold.isCrossedDegenerationThreshold(metricErrorRates, INCIDENT_THRESHOLD_PERCENTAGE, INCIDENT_DEGENERATION_DURATION, Period.SixtySeconds);
+    const errorRateThreshold = new ErrorRateThreshold(INCIDENT_THRESHOLD_PERCENTAGE);
+    const errorRateState: ErrorRateState = errorRateThreshold.getDegenerationState(metricErrorRates, INCIDENT_DEGENERATION_DURATION, Period.SixtySeconds);
 
-    Logger.log('isCrossedThreshold', isCrossedThreshold);
+    Logger.log('errorRateState', errorRateState);
 
-    if (isCrossedThreshold) {
+    if (errorRateState === ErrorRateState.ThresholdCrossed) {
         const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
         const isCreateIncidentSuccess: boolean =
             await incidentWebhook.createIncident(
@@ -152,7 +153,7 @@ const incidentDegenerationHandler = async (alarmEvent: AlarmEvent, context: Cont
     }
 };
 
-const incidentRecoveryHandler = async (alarmEvent: AlarmEvent, context: Context) => {
+const postIncidentHandler = async (alarmEvent: AlarmEvent, context: Context) => {
     const metricTimeRange = new MetricTimeRange();
     const metricTime: MetricTime = metricTimeRange.calculate(new Date().toISOString(), INCIDENT_RECOVERY_DURATION);
 
@@ -163,12 +164,12 @@ const incidentRecoveryHandler = async (alarmEvent: AlarmEvent, context: Context)
 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
-    const errorRateThreshold = new ErrorRateThreshold();
-    const isCrossedThreshold: boolean = errorRateThreshold.isCrossedRecoveryThreshold(metricErrorRates, INCIDENT_THRESHOLD_PERCENTAGE);
+    const errorRateThreshold = new ErrorRateThreshold(INCIDENT_THRESHOLD_PERCENTAGE);
+    const errorRateState: ErrorRateState = errorRateThreshold.getRecoveryState(metricErrorRates);
 
-    Logger.log('isCrossedThreshold', isCrossedThreshold);
+    Logger.log('errorRateState', errorRateState);
 
-    if (isCrossedThreshold) {
+    if (errorRateState === ErrorRateState.ThresholdCrossed) {
         const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
         const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident(alarmEvent.stateChangeTime);
 
