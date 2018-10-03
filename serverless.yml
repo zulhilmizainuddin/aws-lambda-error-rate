@@ -107,52 +107,16 @@ resources:
       Value:
         Ref: LambdaErrorRateSecurityGroup
 
-    LambdaErrorRateFunctionArn:
-      Value:
-        Fn::GetAtt:
-          - 'ErrorRateLambdaFunction'
-          - 'Arn'
-
-    LambdaErrorRateFunctionName:
-      Value:
-        Ref: ErrorRateLambdaFunction
-
-    LambdaErrorFunctionArn:
-      Value:
-        Fn::GetAtt:
-          - 'ErrorLambdaFunction'
-          - 'Arn'
-
-    LambdaErrorFunctionName:
-      Value:
-        Ref: ErrorLambdaFunction
-
-    LambdaErrorAlarmArn:
-      Value:
-        Fn::GetAtt:
-          - 'LambdaErrorAlarm'
-          - 'Arn'
-
-    LambdaErrorAlarmName:
+    LambdaErrorAlarm:
       Value:
         Ref: LambdaErrorAlarm
 
-    LambdaErrorSnsTopicArn:
-      Value:
-        Ref: LambdaErrorSnsTopic
-
-    LambdaErrorSnsTopicName:
+    LambdaErrorSnsTopic:
       Value:
         Fn::GetAtt:
           - 'LambdaErrorSnsTopic'
           - 'TopicName'
 
-    ErrorRateIncidentFlagBucketArn:
-      Value:
-        Fn::GetAtt:
-          - 'ErrorRateIncidentFlagBucket'
-          - 'Arn'
-
-    ErrorRateIncidentFlagBucketName:
+    ErrorRateIncidentFlagBucket:
       Value:
         Ref: ErrorRateIncidentFlagBucket
