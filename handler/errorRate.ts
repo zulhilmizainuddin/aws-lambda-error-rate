@@ -165,11 +165,11 @@ const postIncidentHandler = async (alarmEvent: AlarmEvent, context: Context) => 
     Logger.logJson('metricErrorRates', metricErrorRates);
 
     const errorRateThreshold = new ErrorRateThreshold(INCIDENT_THRESHOLD_PERCENTAGE);
-    const errorRateState: ErrorRateState = errorRateThreshold.getRecoveryState(metricErrorRates);
+    const errorRateState: ErrorRateState = errorRateThreshold.getRecoveryState(metricErrorRates, INCIDENT_RECOVERY_DURATION, Period.SixtySeconds);
 
     Logger.log('errorRateState', errorRateState);
 
-    if (errorRateState === ErrorRateState.ThresholdCrossed) {
+    if (errorRateState === ErrorRateState.Recovered) {
         const incidentWebhook: IncidentWebhook = IncidentWebhookFactory.getIncidentWebhook(INCIDENT_INTEGRATION_WEBHOOK, INCIDENT_INTEGRATION_URL);
         const isResolveIncidentSuccess: boolean = await incidentWebhook.resolveIncident(alarmEvent.stateChangeTime);
 

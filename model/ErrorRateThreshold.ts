@@ -26,7 +26,7 @@ export class ErrorRateThreshold {
         return errorRateState;
     }
 
-    public getRecoveryState(metricErrorRates: MetricErrorRate[]): ErrorRateState {
+    public getRecoveryState(metricErrorRates: MetricErrorRate[], duration: Duration, period: Period): ErrorRateState {
 
         let count: number = 0;
         for (let metricErrorRate of metricErrorRates) {
@@ -35,9 +35,16 @@ export class ErrorRateThreshold {
             }
         }
 
-        const isCrossed: boolean = count === 0 ? true : false;
+        const thresholdCountToCross: number = duration / period;
 
-        const errorRateState: ErrorRateState = isCrossed ? ErrorRateState.ThresholdCrossed : ErrorRateState.Recovery;
+        let errorRateState: ErrorRateState;
+        if (count === thresholdCountToCross) {
+            errorRateState = ErrorRateState.ThresholdCrossed;
+        } else if (count === 0) {
+            errorRateState = ErrorRateState.Recovered;
+        } else {
+            errorRateState = ErrorRateState.Recovery;
+        }
 
         return errorRateState;
     }

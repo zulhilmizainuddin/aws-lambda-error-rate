@@ -25,7 +25,7 @@ describe('ErrorRateThreshold', () => {
             }
         ];
 
-        let errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
+        const errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
         let errorRateState: ErrorRateState = errorRateThreshold.getDegenerationState(metricErrorRates, Duration.ThreeHundredSeconds, Period.SixtySeconds);
 
         expect(errorRateState).to.equal(ErrorRateState.Degeneration);
@@ -53,7 +53,6 @@ describe('ErrorRateThreshold', () => {
             }
         ];
 
-        errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
         errorRateState = errorRateThreshold.getDegenerationState(metricErrorRates, Duration.ThreeHundredSeconds, Period.SixtySeconds);
         
         expect(errorRateState).to.equal(ErrorRateState.ThresholdCrossed);
@@ -71,12 +70,27 @@ describe('ErrorRateThreshold', () => {
             },
             {
                 "timestamp": new Date("2018-09-16T00:07:00.000Z"),
+                "errorRate": 30
+            }
+        ];
+
+        const errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
+        let errorRateState: ErrorRateState = errorRateThreshold.getRecoveryState(metricErrorRates, Duration.OneHundredEightySeconds, Period.SixtySeconds);
+
+        expect(errorRateState).to.equal(ErrorRateState.ThresholdCrossed);
+
+        metricErrorRates = [
+            {
+                "timestamp": new Date("2018-09-16T00:05:00.000Z"),
+                "errorRate": 10
+            },
+            {
+                "timestamp": new Date("2018-09-16T00:06:00.000Z"),
                 "errorRate": 0
             }
         ];
 
-        let errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
-        let errorRateState: ErrorRateState = errorRateThreshold.getRecoveryState(metricErrorRates);
+        errorRateState = errorRateThreshold.getRecoveryState(metricErrorRates, Duration.OneHundredEightySeconds, Period.SixtySeconds);
 
         expect(errorRateState).to.equal(ErrorRateState.Recovery);
 
@@ -91,9 +105,8 @@ describe('ErrorRateThreshold', () => {
             }
         ];
 
-        errorRateThreshold = new ErrorRateThreshold(Threshold.OnePercent);
-        errorRateState = errorRateThreshold.getRecoveryState(metricErrorRates);
+        errorRateState = errorRateThreshold.getRecoveryState(metricErrorRates, Duration.OneHundredEightySeconds, Period.SixtySeconds);
 
-        expect(errorRateState).to.equal(ErrorRateState.ThresholdCrossed);
+        expect(errorRateState).to.equal(ErrorRateState.Recovered);
     });
 });

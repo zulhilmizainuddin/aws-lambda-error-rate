@@ -1,5 +1,6 @@
 export enum ErrorRateState {
     Degeneration = 'Degeneration',
     ThresholdCrossed = 'ThresholdCrossed',
-    Recovery = 'Recovery'
+    Recovery = 'Recovery',
+    Recovered = 'Recovered'
 }
