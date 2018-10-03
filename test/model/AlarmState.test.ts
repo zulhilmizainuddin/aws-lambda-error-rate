@@ -17,13 +17,13 @@ describe('AlarmState', () => {
             },
             "MetricAlarms":[
                 {
-                    "AlarmName":"aws-lambda-error-rate-dev-LambdaErrorAlarm-17CU0S1GI648Z",
-                    "AlarmArn":"arn:aws:cloudwatch:ap-southeast-1:123456789012:alarm:aws-lambda-error-rate-dev-LambdaErrorAlarm-17CU0S1GI648Z",
+                    "AlarmName":"LambdaErrorAlarm",
+                    "AlarmArn":"arn:aws:cloudwatch:ap-southeast-1:123456789012:alarm:LambdaErrorAlarm",
                     "AlarmDescription":"Lambda error alarm",
                     "AlarmConfigurationUpdatedTimestamp":"2018-09-12T07:36:23.419Z",
                     "ActionsEnabled":true,
                     "OKActions":[
-                        "arn:aws:sns:ap-southeast-1:123456789012:aws-lambda-error-rate-dev-LambdaErrorSnsTopic-ZU96UUZ1U7SX"
+
                     ],
                     "AlarmActions":[
                         "arn:aws:sns:ap-southeast-1:123456789012:aws-lambda-error-rate-dev-LambdaErrorSnsTopic-ZU96UUZ1U7SX"
@@ -65,7 +65,7 @@ describe('AlarmState', () => {
             return describeAlarmOutput;
         });
 
-        const stateValue: string = await alarmState.getState('aws-lambda-error-rate-dev-LambdaErrorAlarm-17CU0S1GI648Z');
+        const stateValue: string = await alarmState.getState('LambdaErrorAlarm');
         
         expect(stateValue).to.equal('OK');
     });

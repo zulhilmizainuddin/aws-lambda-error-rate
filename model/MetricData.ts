@@ -20,22 +20,17 @@ export class MetricData {
         const data: CloudWatch.GetMetricDataOutput = await this.getMetricDataOutput(param);
 
         const metricErrorRates: MetricErrorRate[] = [];
-        if (data.MetricDataResults) {
-            for (let result of data.MetricDataResults) {
-                
-                if (result.Id === 'errorrate') {
-                    if (result.Timestamps && result.Values) {
+        for (let result of data.MetricDataResults) {
+            if (result.Id === 'errorrate') {
 
-                        for (let i = 0; i < result.Timestamps.length; i++) {
-                            metricErrorRates.push({
-                                timestamp: result.Timestamps[i],
-                                errorRate: result.Values[i]
-                            });
-                        }
-
-                        break;
-                    }
+                for (let i = 0; i < result.Timestamps.length; i++) {
+                    metricErrorRates.push({
+                        timestamp: result.Timestamps[i],
+                        errorRate: result.Values[i]
+                    });
                 }
+
+                break;
             }
         }
 

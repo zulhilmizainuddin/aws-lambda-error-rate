@@ -12,14 +12,12 @@ export class AlarmState {
         const describeAlarmOutput: CloudWatch.DescribeAlarmsOutput = await this.getDescribeAlarmOutput(describeAlarmInput);
 
         let stateValue: string = '';
-        if (describeAlarmOutput.MetricAlarms) {
-            for (let metricAlarm of describeAlarmOutput.MetricAlarms) {
+        for (let metricAlarm of describeAlarmOutput.MetricAlarms) {
 
-                if (metricAlarm.AlarmName === alarmName) {
-                    stateValue = metricAlarm.StateValue || '';
+            if (metricAlarm.AlarmName === alarmName) {
+                stateValue = metricAlarm.StateValue;
 
-                    break;
-                }
+                break;
             }
         }
 
