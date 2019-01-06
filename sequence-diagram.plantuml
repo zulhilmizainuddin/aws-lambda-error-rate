@@ -1,0 +1,104 @@
+@startuml
+skinparam ParticipantPadding 30
+skinparam BoxPadding 10
+
+box #LightBlue
+
+autonumber
+actor App
+
+App -> Lambda: Request data
+Lambda -> Lambda: Errorred
+Lambda -> App: Error response
+
+end box
+
+box #LightCyan
+
+autonumber
+
+note right of CloudWatch
+    **Setup**
+    1. CloudWatch is already set to monitor Lambda errors
+    2. Lambda error alarm is already set to be forwarded to SNS topic
+    3. SNS topic already created and set to forward alarm to ErrorRateLambda
+    4. S3 bucket is already created to store incident flag
+    5. PagerTree account already created and setup done
+end note
+
+CloudWatch --> CloudWatch: Lambda error detected
+CloudWatch --> SNS: Send alarm to SNS topic
+SNS --> ErrorRateLambda: Forward alarm
+
+ErrorRateLambda -> ErrorRateLambda: Extract alarm content
+ErrorRateLambda -> CloudWatchEvents: Create recurring rule
+
+note right of ErrorRateLambda
+    Recurring rule to periodically
+    check error rate
+end note
+
+loop as long as recurring rule exist
+    CloudWatchEvents --> ErrorRateLambda: Invoke error rate lambda
+    ErrorRateLambda -> CloudWatch: Check Lambda alarm state
+
+    alt alarm in 'ALARM' state
+        CloudWatch -> ErrorRateLambda: Lambda alarm in 'ALARM' state
+        ErrorRateLambda -> S3: Check incident flag
+
+        alt pre incident case
+            S3 -> ErrorRateLambda: Incident flag does not exist
+            ErrorRateLambda -> CloudWatch: Request for Lambda error rate
+
+            alt if error rate below threshold
+                CloudWatch -> ErrorRateLambda: Lambda error rate below threshold
+                ErrorRateLambda -> ErrorRateLambda: Do nothing
+            else if error rate above threshold
+                CloudWatch -> ErrorRateLambda: Lambda error rate above threshold
+                ErrorRateLambda -> PagerTree: Create incident alert
+                ErrorRateLambda -> S3: Set incident flag
+            end
+        else post incident case
+            S3 -> ErrorRateLambda: Incident flag exist
+            ErrorRateLambda -> CloudWatch: Request for Lambda error rate
+
+            alt if error rate still above threshold
+                CloudWatch -> ErrorRateLambda: Lambda error rate above threshold
+                ErrorRateLambda -> ErrorRateLambda: Do nothing
+            else if error rate dropped below threshold
+                CloudWatch -> ErrorRateLambda: Lambda error rate dropped below threshold
+                ErrorRateLambda -> PagerTree: Resolve incident alert
+                ErrorRateLambda -> S3: Unset incident flag
+                ErrorRateLambda -> CloudWatchEvents: Remove recurring rule
+
+                note right of ErrorRateLambda
+                    At this point
+                    the monitoring is done
+                    for the session
+                end note
+            end
+        end
+    else alarm not in 'ALARM' state
+        CloudWatch -> ErrorRateLambda: Lambda alarm not in 'ALARM' state
+        ErrorRateLambda -> S3: Check incident flag
+
+        alt incident flag does not exist
+            S3 -> ErrorRateLambda: Incident flag does not exist
+            ErrorRateLambda -> ErrorRateLambda: Do nothing
+        else incident flag exist
+            S3 -> ErrorRateLambda: Incident flag exist
+            ErrorRateLambda -> PagerTree: Resolve incident alert
+            ErrorRateLambda -> S3: Unset incident flag
+            ErrorRateLambda -> CloudWatchEvents: Remove recurring rule
+
+            note right of ErrorRateLambda
+                    At this point
+                    the monitoring is done
+                    for the session
+            end note
+        end
+    end
+end
+
+end box
+@enduml
